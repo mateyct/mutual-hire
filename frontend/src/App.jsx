@@ -13,10 +13,7 @@ function App() {
 
   return (
     <>
-      <p>howdy</p>
-      {/* <BrowserRouter> */}
-        {/* <Welcome /> */}
-      {/* </BrowserRouter> */}
+      <Welcome />
     </>
   )
 }
