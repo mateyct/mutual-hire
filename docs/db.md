@@ -4,7 +4,7 @@
 
 Job
 - Title
-- Company
+- User (user_id)
 - Location
 - Pay
 - Type (internships/part-time/full-time)

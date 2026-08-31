@@ -14,6 +14,7 @@ class Job(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name="jobs",
+        db_column="user_id"
     )
     location = models.CharField(max_length=255)
     pay = models.DecimalField(max_digits=12, decimal_places=2)
