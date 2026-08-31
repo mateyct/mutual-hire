@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from pgvector.django import VectorField
+from .embedding import generate_embedding
 
 
 class Job(models.Model):
@@ -30,6 +32,50 @@ class Resume(models.Model):
         related_name="resumes",
         null=True
     )
+
+    skills_embedding = VectorField(dimensions=1536, null=True, blank=True)
+    experience_embedding = VectorField(dimensions=1536, null=True, blank=True)
+    education_embedding = VectorField(dimensions=1536, null=True, blank=True)
+
+    def update_section_embedding(self, section_name: str):
+        combined_text = ""
+        field_to_update = f"{section_name}_embedding"
+
+        if section_name == "skills":
+            skills_list = [
+                f"{e.skill}, " 
+                for e in self.skills.all()
+            ]
+            if not skills_list:
+                setattr(self, field_to_update, None)
+                self.save(update_fields=[field_to_update])
+                return
+            combined_text = "Skills:\n" + "\n".join(skills_list)
+        if section_name == "experience":
+            exp_list = [
+                f"{e.title} at {e.company}. Details: {e.description}" 
+                for e in self.experiences.all()
+            ]
+            if not exp_list:
+                setattr(self, field_to_update, None)
+                self.save(update_fields=[field_to_update])
+                return
+            combined_text = "Experience:\n" + "\n".join(exp_list)
+        if section_name == "education":
+            edu_list = [
+                f"{e.degree} in {e.major} at {e.title}. Details: {e.description}" 
+                for e in self.education.all()
+            ]
+            if not edu_list:
+                setattr(self, field_to_update, None)
+                self.save(update_fields=[field_to_update])
+                return
+            combined_text = "Education History:\n" + "\n".join(edu_list)
+
+        if combined_text:
+            vector = generate_embedding(combined_text)
+            setattr(self, field_to_update, vector)
+            self.save(update_fields=[field_to_update])
 
 
 class UserProfile(models.Model):
