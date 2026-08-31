@@ -77,8 +77,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mutualhire_db',
+        'USER': 'mutualhire_user',
+        'PASSWORD': 'ilovemason',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
