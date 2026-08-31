@@ -4,7 +4,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import './App.css'
 import { useLocation, BrowserRouter, Routes, Route, Link } from 'react-dom'
-import Welcome from "./welcome/Welcome"
+import Welcome from "./welcome/Welcome.tsx"
 
 
 function App() {
@@ -12,11 +12,12 @@ function App() {
 
 
   return (
-    <div>
-      <BrowserRouter>
-        <Welcome />
-      </BrowserRouter>
-    </div>
+    <>
+      <p>howdy</p>
+      {/* <BrowserRouter> */}
+        {/* <Welcome /> */}
+      {/* </BrowserRouter> */}
+    </>
   )
 }
 
