@@ -24,6 +24,12 @@ class Job(models.Model):
 
 class Resume(models.Model):
     summary = models.TextField()
+    owner = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="resumes",
+        null=True
+    )
 
 
 class UserProfile(models.Model):
