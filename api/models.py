@@ -78,20 +78,27 @@ class Resume(models.Model):
             self.save(update_fields=[field_to_update])
 
 
+class UserType(models.TextChoices):
+    RECRUITER = "recruiter", "Recruiter"
+    APPLICANT = "applicant", "Applicant"
+
 class UserProfile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="profile",
     )
-    is_recruiter = models.BooleanField(default=False)
+    user_type = models.CharField(max_length=16, choices=UserType.choices, default=UserType.RECRUITER)
     company_name = models.CharField(max_length=255, blank=True)
+    description = models.TextField(
+        null=True
+    )
 
     class Meta:
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    models.Q(is_recruiter=False)
+                    models.Q(user_type=UserType.RECRUITER)
                     | ~models.Q(company_name="")
                 ),
                 name="recruiter_requires_company_name",
