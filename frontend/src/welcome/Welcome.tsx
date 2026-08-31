@@ -4,7 +4,7 @@ const Welcome = () => {
     return (
         <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
             <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px 32px" }}>
-                <h1 style={{ margin: 0 }}>Welcome</h1>
+                <h1 style={{ margin: 0 }}>Welcome to MutualHire</h1>
                 <button type="button" style={{ padding: "10px 18px", fontSize: "16px", cursor: "pointer" }}>
                     Login
                 </button>
@@ -22,4 +22,4 @@ const Welcome = () => {
     );
 };
 
-export default Welcome
+export default Welcome;
