@@ -6,7 +6,7 @@ const Login = () => {
     const username = String(formData.get("username") || "");
     const password = String(formData.get("password") || "");
 
-        console.log("here");
+    console.log("here");
 
     const response = await fetch("http://localhost:8000/api/auth/login", {
         method: "POST",
@@ -32,7 +32,7 @@ const Login = () => {
                     <label htmlFor="password">Password: </label>
                     <input id="password" name="password" type="password" />
                 </div>
-                <button type="button">Login</button>
+                <button type="submit">Login</button>
             </form>
         </div>
     );

@@ -1,3 +1,13 @@
+# from django.shortcuts import render
+# from django.views.generic import Create
+# from .models import UserProfile
+# from rest_framework.authtoken.views import ObtainAuthToken
+# from rest_framework.response import Response
+from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import AllowAny
+
+from .serializers import RegisterSerializer
+
 from django.shortcuts import render
 from django.views.generic import DetailView
 from .models import UserProfile
@@ -10,8 +20,10 @@ from .serializers import ResumeSerializer
 from .models import Job
 
 # Create your views here.
-# class GetUserProfile(DetailView):
-    
+class RegisterView(CreateAPIView):
+    serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
+
 class MatchingResumes(APIView):
     def get(self, request):
         job_id = request.query_params.get('job_id')
