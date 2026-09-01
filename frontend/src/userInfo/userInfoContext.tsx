@@ -3,7 +3,7 @@ import { type UserInfo } from "./userInfo.js";
 
 export const UserInfoContext = createContext<UserInfo>({} as UserInfo);
 
-interface UserInfoActions {
+export interface UserInfoActions {
     updateUserInfo: (
         currentUserType: string,
         username: string,
