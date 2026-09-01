@@ -1,14 +1,38 @@
 import "./Match.css";
-import Job from "./Job.js";
-import ResumeMatch from "./Resume.js";
-import { ApplicantUser } from "shared";
+import MatchJob from "./MatchJob.js";
+import MatchResume from "./MatchResume.js";
+import { ApplicantUser, CompanyUser, Job } from "shared";
 
-const Match = ({ userType, applicant }: { userType: string, applicant : ApplicantUser }) => {
+//pls don't ask what's happening here
+type ProposedMatch =
+  | {
+      type: "applicant";
+      applicant: ApplicantUser;
+    }
+  | {
+      type: "job";
+      job: Job;
+      company: CompanyUser;
+    };
+
+const Match = ({
+  proposedMatch,
+}: {
+  proposedMatch: ProposedMatch;
+}) => {
   return (
     <div className="match-container">
       <div className="match-content">
-        {userType === "CompanyUser" && <ResumeMatch applicant={applicant}/>}
-        {userType === "ApplicantUser" && <Job />}
+        {proposedMatch.type === "applicant" && (
+        <MatchResume applicant={proposedMatch.applicant} />
+        )}
+
+        {proposedMatch.type === "job" && (
+        <MatchJob
+            job={proposedMatch.job}
+            company={proposedMatch.company}
+        />
+        )}
       </div>
       <div className="match-buttons">
         <button className="match-button reject-button">X</button>
