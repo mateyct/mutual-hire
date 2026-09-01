@@ -1,19 +1,14 @@
 import { useState } from "react";
 import SideMenu from "../pages/Menu.js";
-import {
-  DegreeType,
-  Education,
-  Experience,
-  ExperienceType,
-  Resume as ResumeModel,
-} from "shared";
+import { useUserInfo } from "../userInfo/userInfoHooks.js";
+
+type ExperienceTypeValue = "full_time" | "part_time" | "internship";
 
 type EducationDraft = {
   id: number;
-  school: string;
+  title: string;
   degree: string;
-  degreeType: DegreeType;
-  focus: string;
+  major: string;
   gpa: string;
   start: string;
   end: string;
@@ -27,17 +22,17 @@ type ExperienceDraft = {
   company: string;
   start: string;
   end: string;
+  currentJob: boolean;
   description: string;
-  type: ExperienceType;
+  type: ExperienceTypeValue;
   saved: boolean;
 };
 
 const createEmptyEducation = (id: number): EducationDraft => ({
   id,
-  school: "",
+  title: "",
   degree: "",
-  degreeType: DegreeType.Bachelors,
-  focus: "",
+  major: "",
   gpa: "",
   start: "",
   end: "",
@@ -51,12 +46,14 @@ const createEmptyExperience = (id: number): ExperienceDraft => ({
   company: "",
   start: "",
   end: "",
+  currentJob: false,
   description: "",
-  type: ExperienceType.fullTime,
+  type: "full_time",
   saved: false,
 });
 
 const ResumePage = () => {
+  const { auth } = useUserInfo();
   const [personalSummary, setPersonalSummary] = useState("");
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
@@ -66,6 +63,8 @@ const ResumePage = () => {
   const [experienceEntries, setExperienceEntries] = useState<ExperienceDraft[]>(
     [],
   );
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
   const addSkill = () => {
     const trimmedSkill = skillInput.trim();
@@ -95,7 +94,7 @@ const ResumePage = () => {
   const updateEducationEntry = (
     id: number,
     field: keyof Omit<EducationDraft, "id" | "saved">,
-    value: string | DegreeType,
+    value: string,
   ) => {
     setEducationEntries((previous) =>
       previous.map((entry) =>
@@ -128,7 +127,7 @@ const ResumePage = () => {
   const updateExperienceEntry = (
     id: number,
     field: keyof Omit<ExperienceDraft, "id" | "saved">,
-    value: string | ExperienceType,
+    value: string | boolean | ExperienceTypeValue,
   ) => {
     setExperienceEntries((previous) =>
       previous.map((entry) =>
@@ -151,44 +150,132 @@ const ResumePage = () => {
     );
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const buildResumePayload = () => {
+    const validEducation = educationEntries
+      .filter((entry) => entry.saved)
+      .map((entry) => {
+        if (
+          !entry.title.trim() ||
+          !entry.degree.trim() ||
+          !entry.major.trim()
+        ) {
+          throw new Error(
+            "Each saved education entry needs a school, degree, and major.",
+          );
+        }
+
+        if (!entry.start) {
+          throw new Error("Each saved education entry needs a start date.");
+        }
+
+        const gpaValue = entry.gpa.trim();
+        const numericGpa = gpaValue ? Number(gpaValue) : null;
+        if (
+          gpaValue &&
+          (numericGpa === null ||
+            Number.isNaN(numericGpa) ||
+            numericGpa < 0 ||
+            numericGpa > 4)
+        ) {
+          throw new Error("Education GPA must be between 0 and 4.");
+        }
+
+        return {
+          title: entry.title.trim(),
+          degree: entry.degree.trim(),
+          major: entry.major.trim(),
+          gpa: numericGpa,
+          start_date: entry.start,
+          end_date: entry.end || null,
+          description: entry.description.trim(),
+        };
+      });
+
+    const validExperience = experienceEntries
+      .filter((entry) => entry.saved)
+      .map((entry) => {
+        if (!entry.title.trim() || !entry.company.trim()) {
+          throw new Error(
+            "Each saved experience entry needs a title and company.",
+          );
+        }
+
+        if (!entry.start) {
+          throw new Error("Each saved experience entry needs a start date.");
+        }
+
+        if (!entry.currentJob && !entry.end) {
+          throw new Error(
+            "Experience end date is required unless the job is current.",
+          );
+        }
+
+        if (entry.type !== "full_time" && entry.type !== "part_time" && entry.type !== "internship") {
+          throw new Error("Experience type must be either job or project.");
+        }
+
+        return {
+          title: entry.title.trim(),
+          company: entry.company.trim(),
+          start_date: entry.start,
+          end_date: entry.currentJob ? null : entry.end,
+          current_job: entry.currentJob,
+          description: entry.description.trim(),
+          type: entry.type,
+        };
+      });
+
+    if (!personalSummary.trim()) {
+      throw new Error("Personal summary is required.");
+    }
+
+    return {
+      summary: personalSummary.trim(),
+      experience: validExperience,
+      education: validEducation,
+      skills: skills.map((skill) => skill.trim()).filter(Boolean),
+    };
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitError(null);
+    setSubmitSuccess(null);
 
-    const resume = new ResumeModel(null, personalSummary);
+    if (!auth) {
+      setSubmitError("You must be logged in to save your resume.");
+      return;
+    }
 
-    educationEntries
-      .filter((entry) => entry.saved)
-      .forEach((entry) => {
-        const education = new Education(
-          entry.school,
-          entry.degree,
-          entry.degreeType,
-          entry.focus,
-          Number(entry.gpa || 0),
-          new Date(entry.start),
-          new Date(entry.end),
-          entry.description,
-        );
-        resume.addEducation(education);
+    try {
+      const payload = buildResumePayload();
+
+      const response = await fetch("http://localhost:8000/api/resume/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${auth}`,
+        },
+        body: JSON.stringify(payload),
       });
 
-    experienceEntries
-      .filter((entry) => entry.saved)
-      .forEach((entry) => {
-        const experience = new Experience(
-          entry.title,
-          entry.company,
-          new Date(entry.start),
-          new Date(entry.end),
-          entry.description,
-          entry.type,
-        );
-        resume.addExperience(experience);
-      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const message =
+          errorData?.detail ||
+          errorData?.non_field_errors?.[0] ||
+          "The resume could not be saved.";
+        throw new Error(message);
+      }
 
-    skills.forEach((skill) => resume.addSkill(skill));
-
-    console.log("Resume data:", resume);
+      setSubmitSuccess("Resume saved successfully.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The resume could not be saved.";
+      setSubmitError(message);
+    }
   };
 
   const unsavedEducation = educationEntries.filter((entry) => !entry.saved);
@@ -331,14 +418,14 @@ const ResumePage = () => {
                 {unsavedEducation.map((entry) => (
                   <div key={entry.id} style={draftCardStyle}>
                     <div style={fieldRowStyle}>
-                      <label style={labelStyle}>School</label>
+                      <label style={labelStyle}>School / university</label>
                       <input
                         type="text"
-                        value={entry.school}
+                        value={entry.title}
                         onChange={(event) =>
                           updateEducationEntry(
                             entry.id,
-                            "school",
+                            "title",
                             event.target.value,
                           )
                         }
@@ -363,35 +450,14 @@ const ResumePage = () => {
                     </div>
 
                     <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Degree type</label>
-                      <select
-                        value={entry.degreeType}
-                        onChange={(event) =>
-                          updateEducationEntry(
-                            entry.id,
-                            "degreeType",
-                            event.target.value as DegreeType,
-                          )
-                        }
-                        style={inputStyle}
-                      >
-                        {Object.values(DegreeType).map((degreeType) => (
-                          <option key={degreeType} value={degreeType}>
-                            {degreeType}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Focus</label>
+                      <label style={labelStyle}>Major</label>
                       <input
                         type="text"
-                        value={entry.focus}
+                        value={entry.major}
                         onChange={(event) =>
                           updateEducationEntry(
                             entry.id,
-                            "focus",
+                            "major",
                             event.target.value,
                           )
                         }
@@ -512,10 +578,9 @@ const ResumePage = () => {
                         ×
                       </button>
                     </div>
-                    <div>School: {entry.school || "N/A"}</div>
+                    <div>School / university: {entry.title || "N/A"}</div>
                     <div>Degree: {entry.degree || "N/A"}</div>
-                    <div>Degree Type: {entry.degreeType || "N/A"}</div>
-                    <div>Focus: {entry.focus || "N/A"}</div>
+                    <div>Major: {entry.major || "N/A"}</div>
                     <div>GPA: {entry.gpa || "N/A"}</div>
                     <div>Start: {entry.start || "N/A"}</div>
                     <div>End: {entry.end || "N/A"}</div>
@@ -587,17 +652,38 @@ const ResumePage = () => {
                           updateExperienceEntry(
                             entry.id,
                             "type",
-                            event.target.value as ExperienceType,
+                            event.target.value as ExperienceTypeValue,
                           )
                         }
                         style={inputStyle}
                       >
-                        {Object.values(ExperienceType).map((experienceType) => (
-                          <option key={experienceType} value={experienceType}>
-                            {experienceType}
-                          </option>
-                        ))}
+                        <option value="job">job</option>
+                        <option value="project">project</option>
                       </select>
+                    </div>
+
+                    <div style={fieldRowStyle}>
+                      <label style={labelStyle}>Currently employed here</label>
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={entry.currentJob}
+                          onChange={(event) =>
+                            updateExperienceEntry(
+                              entry.id,
+                              "currentJob",
+                              event.target.checked,
+                            )
+                          }
+                        />
+                        <span>Current job</span>
+                      </label>
                     </div>
 
                     <div
@@ -627,6 +713,7 @@ const ResumePage = () => {
                         <input
                           type="date"
                           value={entry.end}
+                          disabled={entry.currentJob}
                           onChange={(event) =>
                             updateExperienceEntry(
                               entry.id,
@@ -634,7 +721,10 @@ const ResumePage = () => {
                               event.target.value,
                             )
                           }
-                          style={inputStyle}
+                          style={{
+                            ...inputStyle,
+                            opacity: entry.currentJob ? 0.6 : 1,
+                          }}
                         />
                       </div>
                     </div>
@@ -697,6 +787,7 @@ const ResumePage = () => {
                     <div>Title: {entry.title || "N/A"}</div>
                     <div>Company: {entry.company || "N/A"}</div>
                     <div>Type: {entry.type || "N/A"}</div>
+                    <div>Current job: {entry.currentJob ? "Yes" : "No"}</div>
                     <div>Start: {entry.start || "N/A"}</div>
                     <div>End: {entry.end || "N/A"}</div>
                     <div>Description: {entry.description || "N/A"}</div>
@@ -704,6 +795,17 @@ const ResumePage = () => {
                 ))}
               </div>
             </section>
+
+            {submitError ? (
+              <div style={{ color: "#b91c1c", fontWeight: 600 }}>
+                {submitError}
+              </div>
+            ) : null}
+            {submitSuccess ? (
+              <div style={{ color: "#15803d", fontWeight: 600 }}>
+                {submitSuccess}
+              </div>
+            ) : null}
 
             <button type="submit" style={primaryButtonStyle}>
               Save resume
