@@ -1,9 +1,9 @@
 import { ApplicantUser } from "./ApplicantUser.js";
 
 export enum JobType {
-    fullTime = "Full Time",
-    partTime = "Part Time",
-    intern = "Internship"
+    fullTime = "full_time",
+    partTime = "part_time",
+    intern = "internship"
 }
 
 export class Job {

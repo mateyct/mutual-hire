@@ -3,7 +3,7 @@ import SideMenu from "../pages/Menu.js";
 import { useUserInfo } from "../userInfo/userInfoHooks.js";
 import "./Resume.css";
 
-type ExperienceTypeValue = "full_time" | "part_time" | "internship";
+type ExperienceTypeValue = "job" | "project";
 
 type EducationDraft = {
   id: number;
@@ -49,7 +49,7 @@ const createEmptyExperience = (id: number): ExperienceDraft => ({
   end: "",
   currentJob: false,
   description: "",
-  type: "full_time",
+  type: "job",
   saved: false,
 });
 
@@ -212,9 +212,8 @@ const ResumePage = () => {
         }
 
         if (
-          entry.type !== "full_time" &&
-          entry.type !== "part_time" &&
-          entry.type !== "internship"
+          entry.type !== "job" &&
+          entry.type !== "project"
         ) {
           throw new Error("Experience type must be either job or project.");
         }
@@ -600,9 +599,8 @@ const ResumePage = () => {
                         }
                         className="resume-select"
                       >
-                        <option value="full_time">full_time</option>
-                        <option value="part_time">part_time</option>
-                        <option value="internship">internship</option>
+                        <option value="job">Job</option>
+                        <option value="project">Project</option>
                       </select>
                     </div>
 
