@@ -11,4 +11,5 @@ def generate_embedding(text: str) -> list:
         input=[text],
         model="text-embedding-3-small"
     )
+
     return response.data[0].embedding
