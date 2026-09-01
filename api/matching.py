@@ -1,5 +1,5 @@
 from pgvector.django import CosineDistance
-from api.models import Resume, Job
+from api.models import Resume, Job, Match
 from django.db.models import F, ExpressionWrapper, FloatField
 from api.embedding import generate_embedding
 
@@ -12,7 +12,12 @@ def find_matching_resumes_for_job(job:Job):
     if not job.description_embedding:
         return []
 
-    ranked_resumes = Resume.objects.annotate(
+    seen_resume_ids = Match.objects.filter(
+        job=job, 
+        employer_swiped_yes__isnull=False
+    ).values_list('resume_id', flat=True)
+
+    ranked_resumes = Resume.objects.exclude(id__in=seen_resume_ids).annotate(
         skill_dist=CosineDistance('skills_embedding', job.description_embedding),
         exp_dist=CosineDistance('experience_embedding', job.description_embedding),
         edu_dist=CosineDistance('education_embedding', job.description_embedding),
@@ -30,7 +35,12 @@ def find_matching_jobs_for_resume(resume: Resume):
     if not resume.skills_embedding or not resume.experience_embedding or not resume.education_embedding:
         return []
 
-    ranked_jobs = Job.objects.exclude(description_embedding__isnull=True).annotate(
+    seen_job_ids = Match.objects.filter(
+        resume=resume, 
+        applicant_swiped_yes__isnull=False
+    ).values_list('job_id', flat=True)
+
+    ranked_jobs = Job.objects.exclude(description_embedding__isnull=True).exclude(id__in=seen_job_ids).annotate(
         skill_dist=CosineDistance('description_embedding', resume.skills_embedding),
         exp_dist=CosineDistance('description_embedding', resume.experience_embedding),
         edu_dist=CosineDistance('description_embedding', resume.education_embedding),
