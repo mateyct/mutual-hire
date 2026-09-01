@@ -25,6 +25,7 @@ const Login = () => {
     const data = await response.json();
 
     if (response.ok) {
+<<<<<<< Updated upstream
       const profile = data["profile"];
 
       if (profile["user_type"] === "applicant") {
@@ -47,10 +48,35 @@ const Login = () => {
         updateUserInfo(currUser, data["token"]);
         nav("/company/jobs");
       }
+=======
+        console.log(data)
+        if (data["profile"]["user_type"] == "applicant") {
+            const currUser = new ApplicantUser(
+              data["profile"]["user"]["first_name"],
+              data["profile"]["user"]["last_name"],
+              username,
+              password,
+              data["profile"]["user"]["email"],
+            );
+            currUser.userID = data["profile"]["user"]["id"];
+            updateUserInfo(currUser, data["token"]);
+            nav("/applicant/resume");
+        } else {
+            const currUser = new CompanyUser(
+              username,
+              password,
+              data["profile"]["user"]["email"],
+              data["profile"]["description"],
+            );
+            updateUserInfo(currUser, data["token"]);
+            nav("/company/jobs");
+        }
+>>>>>>> Stashed changes
     } else {
       console.log("error");
       console.log(data);
     }
+<<<<<<< Updated upstream
   };
 
   return (
@@ -159,5 +185,26 @@ const primaryButtonStyle: React.CSSProperties = {
   fontSize: "1rem",
   fontWeight: 600,
 };
+=======
+    };
+
+    return (
+        <div>
+            <h1>Login</h1>
+            <form onSubmit={handleLogin}>
+                <div>
+                    <label htmlFor="username">User/Company Name: </label>
+                    <input id="username" name="username" type="text" />
+                </div>
+                <div>
+                    <label htmlFor="password">Password: </label>
+                    <input id="password" name="password" type="password" />
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    );
+}
+>>>>>>> Stashed changes
 
 export default Login;

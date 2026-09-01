@@ -30,6 +30,7 @@ function App() {
           />
           <Route path="/company/jobs" element={<Jobs />} />
           <Route path="/company/job" element={<JobPage />} />
+          <Route path="/company/match" element={<Match />} />
         </Routes>
       );
     }
