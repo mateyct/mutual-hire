@@ -5,7 +5,6 @@ import Login from "./auth/login/Login.tsx"
 import ApplicantRegister from "./auth/register/applicant/applicantRegister.tsx"
 import CompanyRegister from "./auth/register/company/companyRegister.tsx"
 
-
 function App() {
   return (
     <Routes>
@@ -13,7 +12,6 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register/applicant" element={<ApplicantRegister />} />
       <Route path="/register/company" element={<CompanyRegister />} />
-      <Route path="/account" element={<Account />} />
     </Routes>
   )
 }
