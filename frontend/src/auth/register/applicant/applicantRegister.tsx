@@ -1,6 +1,11 @@
 import { ApplicantUser } from "shared";
+import { useUserInfoActions } from "../../../userInfo/userInfoHooks.js";
+import { useNavigate } from "react-router-dom";
 
 const ApplicantRegister = () => {
+    const { updateUserInfo } = useUserInfoActions();
+    const nav = useNavigate();
+
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -14,6 +19,11 @@ const ApplicantRegister = () => {
         );
 
         console.log(applicant);
+
+        // MAKE BACKEND CALL HERE AND FIX AUTH TOKEN!!!!
+
+        updateUserInfo("applicant", applicant.username, "fakeTOKEN");
+        nav("/applicant/account");
     };
 
     return (

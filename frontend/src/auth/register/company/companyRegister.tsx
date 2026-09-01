@@ -1,19 +1,29 @@
 import { CompanyUser } from "shared";
+import { useUserInfoActions } from "../../../userInfo/userInfoHooks.js";
+import { useNavigate } from "react-router-dom";
 
 const CompanyRegister = () => {
+    const { updateUserInfo } = useUserInfoActions();
+    const nav = useNavigate();
+
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+      event.preventDefault();
 
-        const formData = new FormData(event.currentTarget);
-        const company = new CompanyUser(
-            String(formData.get("companyName") || ""),
-            String(formData.get("password") || ""),
-            String(formData.get("email") || ""),
-            String(formData.get("description") || "")
-        );
+      const formData = new FormData(event.currentTarget);
+      const company = new CompanyUser(
+        String(formData.get("companyName") || ""),
+        String(formData.get("password") || ""),
+        String(formData.get("email") || ""),
+        String(formData.get("description") || ""),
+      );
 
-        console.log(company);
-    };
+      console.log(company);
+
+      // MAKE BACKEND CALL HERE AND FIX AUTH TOKEN!!!!
+
+      updateUserInfo("applicant", company.companyName, "fakeTOKEN");
+      nav("/company/account");
+    };;
 
     return (
         <div>

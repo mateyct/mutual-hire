@@ -1,4 +1,10 @@
+import { useUserInfoActions } from "../../userInfo/userInfoHooks.js";
+import { useNavigate } from "react-router-dom";
+
 const Login = () => {
+    const { updateUserInfo } = useUserInfoActions();
+    const nav = useNavigate();
+
     const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -7,6 +13,8 @@ const Login = () => {
     const password = String(formData.get("password") || "");
 
     console.log("here");
+
+    // FIGURE OUT RESPONSE AND HOW TO USE TO NAV
 
     const response = await fetch("http://localhost:8000/api/auth/login", {
         method: "POST",
@@ -23,7 +31,7 @@ const Login = () => {
         // companies -> my jobs
         // applicants -> job interests
     } else {
-
+        console.log("error");
     }
     };
 
