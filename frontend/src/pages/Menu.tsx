@@ -1,25 +1,47 @@
-import  './Menu.css'
-import { slide as Menu} from 'react-burger-menu'
-
+import "./Menu.css";
+import { Link } from "react-router-dom";
+import { slide as Menu } from "react-burger-menu";
 
 const SideMenu = ({ userType }: { userType: string }) => {
+  const isCompany = userType === "company";
+  const isApplicant = userType === "applicant";
 
-return (
+  return (
     <Menu>
-      {userType === "CompanyUser" && [
-        <a key="my-jobs" className="menu-item" href="/my-jobs">My Jobs</a>,
-        <a key="hire-ready" className="menu-item" href="/hire-ready">Hire Ready</a>
-      ]}
-      {userType === "ApplicantUser" && [
-          <a className="menu-item" href="/resume">Resume</a>,
-          <a className="menu-item" href="/api/matching/jobs">Match</a>,
-          <a className="menu-item" href="/job-interests">Job Interests</a>,
-      ]}
-      
-      <a id="account" className="menu-item" href="/account">Account</a>
-      <a id="logout" className="menu-item" href="/">Log Out</a>
+      {isCompany ? (
+        <>
+          <Link className="menu-item" to="/company/jobs">
+            My Jobs
+          </Link>
+          <Link className="menu-item" to="/company/job">
+            Add Job
+          </Link>
+        </>
+      ) : (
+        <>
+          <Link className="menu-item" to="/applicant/resume">
+            Resume
+          </Link>
+          <Link className="menu-item" to="/applicant/match">
+            Match
+          </Link>
+          <Link className="menu-item" to="/applicant/interested">
+            Interested
+          </Link>
+        </>
+      )}
+
+      <Link
+        className="menu-item"
+        to={isCompany ? "/company/account" : "/applicant/account"}
+      >
+        Account
+      </Link>
+      <Link className="menu-item" to="/">
+        Log Out
+      </Link>
     </Menu>
-)
-}
+  );
+};
 
 export default SideMenu;

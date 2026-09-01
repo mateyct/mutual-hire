@@ -1,47 +1,77 @@
-import { Routes, Route } from 'react-router-dom'
-import './App.css'
-import Welcome from "./welcome/Welcome.tsx"
-import Login from "./auth/login/Login.tsx"
-import ApplicantRegister from "./auth/register/applicant/applicantRegister.tsx"
-import CompanyRegister from "./auth/register/company/companyRegister.tsx"
-import Account from "./pages/account/Account.tsx"
-import { useUserInfo } from "./userInfo/userInfoHooks.ts"
+import { Routes, Route } from "react-router-dom";
+import "./App.css";
+import Welcome from "./welcome/Welcome.tsx";
+import Login from "./auth/login/Login.tsx";
+import ApplicantRegister from "./auth/register/applicant/applicantRegister.tsx";
+import CompanyRegister from "./auth/register/company/companyRegister.tsx";
+import Account from "./pages/account/Account.tsx";
+import Resume from "./resume/Resume.tsx";
+import Jobs from "./pages/jobs/Jobs.tsx";
+import JobPage from "./pages/jobs/Job.tsx";
+import Interested from "./pages/interested/Interested.tsx";
+import Match from "./pages/match/Match.tsx";
+import { useUserInfo } from "./userInfo/userInfoHooks.ts";
 
 function App() {
-  const { currentUserType,
-        username,
-        auth } = useUserInfo()
+  const { currentUserType, username, auth } = useUserInfo();
 
   const isAuth = () => {
     return !!currentUserType && !!username && !!auth;
-  }
+  };
 
   if (isAuth()) {
     if (currentUserType === "company") {
-      // all company pages
       return (
         <Routes>
-          <Route path="/company/account" element={<Account />} />
+          <Route
+            path="/company/account"
+            element={<Account userType="CompanyUser" />}
+          />
+          <Route path="/company/jobs" element={<Jobs />} />
+          <Route path="/company/job" element={<JobPage />} />
         </Routes>
-      )
-    } else {
-      return (
-        // all applicant pages
-        <Routes>
-          <Route path="/applicant/account" element={<Account />} />
-        </Routes>
-      )
+      );
     }
-  } else {
+
     return (
+      <Routes>
+        <Route
+          path="/applicant/account"
+          element={<Account userType="ApplicantUser" />}
+        />
+        <Route path="/applicant/resume" element={<Resume />} />
+        <Route path="/applicant/interested" element={<Interested />} />
+        <Route
+          path="/applicant/match"
+          element={
+            <Match
+              proposedMatch={{
+                type: "job",
+                job: {
+                  title: "Sample Role",
+                  location: "Remote",
+                  payPerYear: 120000,
+                  type: "fullTime",
+                  description: "Sample match placeholder",
+                  skillsNeeded: ["React", "TypeScript"],
+                },
+                company: { name: "Example Company" },
+              }}
+            />
+          }
+        />
+      </Routes>
+    );
+  }
+
+  return (
     <Routes>
       <Route path="/" element={<Welcome />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register/applicant" element={<ApplicantRegister />} />
       <Route path="/register/company" element={<CompanyRegister />} />
     </Routes>
-  )
-  }
+  );
 }
 
-export default App
+export default App;
