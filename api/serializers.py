@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
 from rest_framework import serializers
 
-from .models import Education, Experience, Job, Resume, Skill, UserProfile, UserType
+from .models import Education, Experience, Job, Resume, Skill, UserProfile, UserType, Match
 
 User = get_user_model()
 
@@ -146,3 +146,12 @@ class JobSerializer(serializers.ModelSerializer):
             instance.skills.all().delete()
             Skill.objects.bulk_create([Skill(job=instance, skill=skill) for skill in skills])
         return instance
+
+class MatchSerializer(serializers.ModelSerializer):
+    job = JobSerializer(read_only=True)
+    resume = ResumeSerializer(read_only=True)
+
+    class Meta:
+        model = Match
+        fields = ["id", "job", "resume", "created_at"]
+        read_only_fields = ["id"]

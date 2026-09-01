@@ -278,3 +278,41 @@ Returns `200 OK` with up to 10 Resume objects ranked for the specified job. Prev
 Returns `200 OK` with up to 10 Job objects ranked for the specified resume. Previously applicant-swiped jobs are excluded. Returns `400` when `resume_id` is omitted and `404` when the resume does not exist.
 
 Both matching responses use the shared public objects above and never expose the embeddings used to calculate similarity.
+
+## Mutual match endpoints
+
+A mutual match is a job-resume relationship where both the applicant and the
+employer have swiped yes. Match responses omit the internal swipe fields and use
+this shape:
+
+```json
+{
+  "id": 61,
+  "job": {"id": 21, "title": "Backend Engineer", "skills": ["Python"]},
+  "resume": {"id": 31, "summary": "Backend developer", "skills": ["Python"]},
+  "created_at": "2026-09-01T18:42:17.120000Z"
+}
+```
+
+The embedded `job` and `resume` values are the complete public Job and Resume
+objects described above. They never contain vector embeddings.
+
+### List an applicant's mutual matches
+
+`GET /api/matches/applicant/{resume_id}/`
+
+Applicant and resume owner only. Returns `200 OK` with an array of Match objects
+for which both parties expressed interest. The array is empty when there are no
+mutual matches. Returns `401` when the authenticated user is not an applicant,
+`404` when the resume does not exist, and `403` when it belongs to another
+applicant.
+
+### List a recruiter's mutual matches
+
+`GET /api/matches/recruiter/{job_id}/`
+
+Recruiter and job owner only. Returns `200 OK` with an array of Match objects for
+which both parties expressed interest. The array is empty when there are no
+mutual matches. Returns `401` when the authenticated user is not a recruiter,
+`404` when the job does not exist, and `403` when it belongs to another
+recruiter.
