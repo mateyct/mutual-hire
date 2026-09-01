@@ -135,15 +135,15 @@ class MatchingResumes(APIView):
 
 class MatchingJobs(APIView):
     def get(self, request):
-        resume_id = request.query_params.get('resume_id')
-
-        resume = Resume.objects.get(pk=resume_id)
-
-        ranked_jobs = find_matching_jobs_for_resume(resume)
-
-        serializer = JobSerializer(ranked_jobs, many=True)
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        resume_id = request.query_params.get("resume_id")
+        if not resume_id:
+            raise serializers.ValidationError(
+                {"resume_id": "This query parameter is required."}
+            )
+        resume = get_object_or_404(Resume, pk=resume_id)
+        return Response(
+            JobSerializer(find_matching_jobs_for_resume(resume), many=True).data
+        )
 
 class SwipeView(APIView):
     permission_classes = [IsAuthenticated] 
