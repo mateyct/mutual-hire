@@ -1,12 +1,17 @@
-from django.urls import path, include
-from rest_framework.authtoken.views import obtain_auth_token
-from .views import MatchingResumes
+from django.urls import path
 
-from .views import RegisterView
+from .views import JobView, LoginView, MatchingJobs, MatchingResumes, RegisterView, ResumeView, UserResumeView, UserView
 
 urlpatterns = [
-    #path('test/', TestEndpointView.as_view(), name='test-endpoint'),
-    path('auth/login/', obtain_auth_token, name='login'),
-    path('auth/register/<str:user_type>/', RegisterView.as_view(), name="register"),
-    path('matching/resumes/<int:job_id>', MatchingResumes.as_view(), name='matching_resumes'),
+    path("auth/login/", LoginView.as_view(), name="login"),
+    path("auth/register/<str:user_type>/", RegisterView.as_view(), name="register"),
+    path("user/", UserView.as_view(), name="current-user"),
+    path("user/<int:user_id>/", UserView.as_view(), name="user-detail"),
+    path("user/<int:user_id>/resume/", UserResumeView.as_view(), name="user-resume"),
+    path("job/", JobView.as_view(), name="jobs"),
+    path("job/<int:job_id>/", JobView.as_view(), name="job-detail"),
+    path("resume/", ResumeView.as_view(), name="resumes"),
+    path("resume/<int:resume_id>/", ResumeView.as_view(), name="resume-detail"),
+    path("matching/resumes/", MatchingResumes.as_view(), name="matching-resumes"),
+    path("matching/jobs/", MatchingJobs.as_view(), name="matching-jobs"),
 ]

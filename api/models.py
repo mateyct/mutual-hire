@@ -183,3 +183,30 @@ class Skill(models.Model):
                 name="skill_has_exactly_one_owner",
             ),
         ]
+
+class Match(models.Model):
+    job = models.ForeignKey(
+        Job, 
+        on_delete=models.CASCADE, 
+        related_name='matches'
+    )
+    resume = models.ForeignKey(
+        Resume, 
+        on_delete=models.CASCADE, 
+        related_name='matches'
+    )
+    
+    # null = hasn't swiped yet, False = swiped left (Pass), True = swiped right (Like)
+    applicant_swiped_yes = models.BooleanField(null=True, blank=True)
+    employer_swiped_yes = models.BooleanField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Ensures a specific resume and specific job can only have one relationship row
+        constraints = [
+            models.UniqueConstraint(
+                fields=['job', 'resume'], 
+                name='unique_mutual_match'
+            )
+        ]
