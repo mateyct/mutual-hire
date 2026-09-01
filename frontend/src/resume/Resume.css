@@ -1,0 +1,206 @@
+.resume-page {
+  min-height: 100vh;
+  padding: 10px;
+}
+
+.resume-shell {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  padding: 20px;
+}
+
+.resume-heading {
+  margin: 0 0 8px;
+  font-size: 2rem;
+}
+
+.resume-subtitle {
+  margin: 0 0 24px;
+  color: #475569;
+}
+
+.resume-form {
+  display: grid;
+  gap: 24px;
+}
+
+.resume-section {
+  display: grid;
+  gap: 12px;
+}
+
+.resume-section-heading {
+  margin: 0;
+}
+
+.resume-input,
+.resume-textarea,
+.resume-select {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #111827;
+}
+
+.resume-textarea {
+  resize: vertical;
+}
+
+.resume-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resume-skill-empty {
+  color: #6b7280;
+}
+
+.resume-skill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 14px;
+  color: #111827;
+}
+
+.resume-skill-remove {
+  border: none;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.resume-skill-input-row,
+.resume-actions,
+.resume-badge-row,
+.resume-card-header,
+.resume-checkbox-row {
+  display: flex;
+  gap: 10px;
+}
+
+.resume-skill-input-row {
+  align-items: center;
+}
+
+.resume-skill-input {
+  flex: 1;
+}
+
+.resume-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.resume-draft-card,
+.resume-saved-card {
+  display: grid;
+  gap: 14px;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.resume-draft-card {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.resume-saved-card {
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  color: #1e293b;
+  gap: 6px;
+  padding: 12px 14px;
+}
+
+.resume-field-row {
+  display: grid;
+  gap: 8px;
+}
+
+.resume-label {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.resume-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.resume-checkbox-row {
+  align-items: center;
+  gap: 8px;
+}
+
+.resume-button-primary,
+.resume-button-secondary,
+.resume-button-danger,
+.resume-mini-button {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.resume-button-primary {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.resume-button-secondary {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #111827;
+}
+
+.resume-button-danger {
+  padding: 10px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
+.resume-mini-button {
+  border: none;
+  background: transparent;
+  color: #374151;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.resume-status-error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.resume-status-success {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.resume-disabled-input {
+  opacity: 0.6;
+}

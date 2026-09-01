@@ -40,7 +40,7 @@ const ApplicantRegister = () => {
             console.log(data)
             applicant.userID = data["profile"]["id"];
             updateUserInfo(applicant, data["token"]);
-            nav("/applicant/account");
+            nav("/applicant/resume");
         } else {
             console.log("SAD :(")
             console.log(data)

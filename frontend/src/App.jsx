@@ -21,7 +21,7 @@ function App() {
   };
 
   if (isAuth()) {
-    if (typeof user === CompanyUser) {
+    if (user instanceof CompanyUser) {
       return (
         <Routes>
           <Route
