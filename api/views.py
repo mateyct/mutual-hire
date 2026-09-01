@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from .matching import find_matching_jobs_for_resume, find_matching_resumes_for_job
 from .models import Job, Resume, UserProfile, UserType
-from .serializers import JobSerializer, RegisterSerializer, ResumeSerializer, UserProfileSerializer
+from .serializers import JobSerializer, RegisterSerializer, ResumeSerializer, UserProfileSerializer, MatchSerializer
 
 
 def unauthorized(message):
@@ -135,15 +135,15 @@ class MatchingResumes(APIView):
 
 class MatchingJobs(APIView):
     def get(self, request):
-        resume_id = request.query_params.get('resume_id')
-
-        resume = Resume.objects.get(pk=resume_id)
-
-        ranked_jobs = find_matching_jobs_for_resume(resume)
-
-        serializer = JobSerializer(ranked_jobs, many=True)
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        resume_id = request.query_params.get("resume_id")
+        if not resume_id:
+            raise serializers.ValidationError(
+                {"resume_id": "This query parameter is required."}
+            )
+        resume = get_object_or_404(Resume, pk=resume_id)
+        return Response(
+            JobSerializer(find_matching_jobs_for_resume(resume), many=True).data
+        )
 
 class SwipeView(APIView):
     permission_classes = [IsAuthenticated] 
@@ -189,3 +189,35 @@ class SwipeView(APIView):
             "message": "Swipe recorded successfully.",
             "is_mutual_match": is_mutual_match
         }, status=status.HTTP_200_OK)
+
+class GetMatchesForJobView(APIView):
+    def get(self, request, job_id):
+        profile = get_object_or_404(UserProfile, user=request.user)
+        if profile.user_type != UserType.RECRUITER:
+            return unauthorized("Only recruiters can search job matches.")
+
+        job = get_object_or_404(Job, pk=job_id)
+        if job.company != request.user:
+            return Response({"error": "You don't own this job."}, status=status.HTTP_403_FORBIDDEN)
+
+        return Response(
+            MatchSerializer(Match.objects.filter(
+                job=job,
+                applicant_swiped_yes=True,
+                employer_swiped_yes=True
+            ), many=True).data, status=status.HTTP_200_OK
+        )
+
+class GetMatchesForResumeView(APIView):
+    def get(self, request):
+        profile = get_object_or_404(UserProfile, user=request.user)
+        if profile.user_type != UserType.APPLICANT:
+            return unauthorized("Only applicants can search job matches.")
+
+        resume = get_object_or_404(Resume, owner=request.user)
+
+        return Response(MatchSerializer(Match.objects.filter(
+            resume=resume,
+            applicant_swiped_yes=True,
+            employer_swiped_yes=True
+        ), many=True).data, status=status.HTTP_200_OK)
