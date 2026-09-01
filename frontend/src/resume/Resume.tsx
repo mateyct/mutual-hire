@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SideMenu from "../pages/Menu.js";
 import { useUserInfo } from "../userInfo/userInfoHooks.js";
 import "./Resume.css";
@@ -29,6 +29,34 @@ type ExperienceDraft = {
   saved: boolean;
 };
 
+type ResumeResponse = {
+  id: number;
+  summary: string;
+  skills: string[];
+  education: Array<{
+    id: number;
+    title: string;
+    degree: string;
+    major: string;
+    gpa: string | null;
+    start_date: string;
+    end_date: string | null;
+    description: string;
+  }>;
+  experience: Array<{
+    id: number;
+    title: string;
+    company: string;
+    start_date: string;
+    end_date: string | null;
+    current_job: boolean;
+    description: string;
+    type: ExperienceTypeValue;
+  }>;
+};
+
+const API_BASE_URL = "http://localhost:8000/api";
+
 const createEmptyEducation = (id: number): EducationDraft => ({
   id,
   title: "",
@@ -54,7 +82,9 @@ const createEmptyExperience = (id: number): ExperienceDraft => ({
 });
 
 const ResumePage = () => {
-  const { auth } = useUserInfo();
+  const { auth, user } = useUserInfo();
+  const [resumeId, setResumeId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [personalSummary, setPersonalSummary] = useState("");
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
@@ -66,6 +96,95 @@ const ResumePage = () => {
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!auth) {
+      setIsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const loadResume = async () => {
+      setIsLoading(true);
+      setSubmitError(null);
+
+      try {
+        let userId = user?.userID ?? null;
+
+        if (userId === null) {
+          const profileResponse = await fetch(`${API_BASE_URL}/user/`, {
+            headers: { Authorization: `Token ${auth}` },
+            signal: controller.signal,
+          });
+          if (!profileResponse.ok) {
+            throw new Error("Your user profile could not be loaded.");
+          }
+          const profile = await profileResponse.json();
+          userId = profile.user.id;
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/user/${userId}/resume/`,
+          {
+            headers: { Authorization: `Token ${auth}` },
+            signal: controller.signal,
+          },
+        );
+
+        if (response.status === 404) {
+          setResumeId(null);
+          return;
+        }
+        if (!response.ok) {
+          throw new Error("Your existing resume could not be loaded.");
+        }
+
+        const resume: ResumeResponse = await response.json();
+        setResumeId(resume.id);
+        setPersonalSummary(resume.summary);
+        setSkills(resume.skills);
+        setEducationEntries(
+          resume.education.map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            degree: entry.degree,
+            major: entry.major,
+            gpa: entry.gpa ?? "",
+            start: entry.start_date,
+            end: entry.end_date ?? "",
+            description: entry.description,
+            saved: true,
+          })),
+        );
+        setExperienceEntries(
+          resume.experience.map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            company: entry.company,
+            start: entry.start_date,
+            end: entry.end_date ?? "",
+            currentJob: entry.current_job,
+            description: entry.description,
+            type: entry.type,
+            saved: true,
+          })),
+        );
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "Your existing resume could not be loaded.",
+        );
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+
+    void loadResume();
+    return () => controller.abort();
+  }, [auth, user]);
 
   const addSkill = () => {
     const trimmedSkill = skillInput.trim();
@@ -112,6 +231,14 @@ const ResumePage = () => {
     );
   };
 
+  const editEducationEntry = (id: number) => {
+    setEducationEntries((previous) =>
+      previous.map((entry) =>
+        entry.id === id ? { ...entry, saved: false } : entry,
+      ),
+    );
+  };
+
   const removeEducationEntry = (id: number) => {
     setEducationEntries((previous) =>
       previous.filter((entry) => entry.id !== id),
@@ -141,6 +268,14 @@ const ResumePage = () => {
     setExperienceEntries((previous) =>
       previous.map((entry) =>
         entry.id === id ? { ...entry, saved: true } : entry,
+      ),
+    );
+  };
+
+  const editExperienceEntry = (id: number) => {
+    setExperienceEntries((previous) =>
+      previous.map((entry) =>
+        entry.id === id ? { ...entry, saved: false } : entry,
       ),
     );
   };
@@ -254,7 +389,10 @@ const ResumePage = () => {
     try {
       const payload = buildResumePayload();
 
-      const response = await fetch("http://localhost:8000/api/resume/", {
+      const endpoint = resumeId
+        ? `${API_BASE_URL}/resume/${resumeId}/`
+        : `${API_BASE_URL}/resume/`;
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -272,7 +410,11 @@ const ResumePage = () => {
         throw new Error(message);
       }
 
-      setSubmitSuccess("Resume saved successfully.");
+      const savedResume: ResumeResponse = await response.json();
+      setResumeId(savedResume.id);
+      setSubmitSuccess(
+        resumeId ? "Resume updated successfully." : "Resume saved successfully.",
+      );
     } catch (error) {
       const message =
         error instanceof Error
@@ -292,11 +434,18 @@ const ResumePage = () => {
       <SideMenu userType="applicant" />
       <div className="resume-page">
         <div className="resume-shell">
-          <h1 className="resume-heading">Create your resume</h1>
+          <h1 className="resume-heading">
+            {resumeId ? "Edit your resume" : "Create your resume"}
+          </h1>
           <p className="resume-subtitle">
             Add your personal summary, experience, education, and skills.
           </p>
 
+          {isLoading ? (
+            <p className="resume-subtitle">Loading your resume…</p>
+          ) : null}
+
+          {!isLoading ? (
           <form onSubmit={handleSubmit} className="resume-form">
             <section className="resume-section">
               <h2 className="resume-section-heading">Personal summary</h2>
@@ -519,13 +668,14 @@ const ResumePage = () => {
                   <div key={entry.id} className="resume-saved-card">
                     <div className="resume-card-header">
                       <strong>Education</strong>
-                      <button
-                        type="button"
-                        onClick={() => removeEducationEntry(entry.id)}
-                        className="resume-mini-button"
-                      >
-                        ×
-                      </button>
+                      <div className="resume-actions">
+                        <button type="button" onClick={() => editEducationEntry(entry.id)} className="resume-mini-button">
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => removeEducationEntry(entry.id)} className="resume-mini-button">
+                          ×
+                        </button>
+                      </div>
                     </div>
                     <div>School / university: {entry.title || "N/A"}</div>
                     <div>Degree: {entry.degree || "N/A"}</div>
@@ -697,13 +847,14 @@ const ResumePage = () => {
                   <div key={entry.id} className="resume-saved-card">
                     <div className="resume-card-header">
                       <strong>Experience</strong>
-                      <button
-                        type="button"
-                        onClick={() => removeExperienceEntry(entry.id)}
-                        className="resume-mini-button"
-                      >
-                        ×
-                      </button>
+                      <div className="resume-actions">
+                        <button type="button" onClick={() => editExperienceEntry(entry.id)} className="resume-mini-button">
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => removeExperienceEntry(entry.id)} className="resume-mini-button">
+                          ×
+                        </button>
+                      </div>
                     </div>
                     <div>Title: {entry.title || "N/A"}</div>
                     <div>Company: {entry.company || "N/A"}</div>
@@ -724,10 +875,11 @@ const ResumePage = () => {
               <div className="resume-status-success">{submitSuccess}</div>
             ) : null}
 
-            <button type="submit" className="resume-button-primary">
-              Save resume
+            <button type="submit" className="resume-button-primary" disabled={isLoading}>
+              {resumeId ? "Update resume" : "Save resume"}
             </button>
           </form>
+          ) : null}
         </div>
       </div>
     </>
