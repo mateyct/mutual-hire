@@ -5,5 +5,5 @@ from .views import MatchingResumes
 urlpatterns = [
     #path('test/', TestEndpointView.as_view(), name='test-endpoint'),
     path('auth/login', obtain_auth_token, name='login'),
-    path('matching/resumes/<int:job_id>', MatchingResumes.as_view(), name='matching_resumes'),
+    path('matching/resumes/', MatchingResumes.as_view(), name='matching_resumes'),
 ]
