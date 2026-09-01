@@ -16,8 +16,15 @@ const Login = () => {
             password: password,
         })
     });
-    const data = await response.json()
-    console.log(data)
+    if (response.ok) {
+        const data = await response.json()
+        console.log(data)
+        // figure out how to navigate to proper landing page
+        // companies -> my jobs
+        // applicants -> job interests
+    } else {
+
+    }
     };
 
     return (
