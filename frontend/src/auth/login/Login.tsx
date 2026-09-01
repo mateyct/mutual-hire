@@ -1,3 +1,4 @@
+import { ApplicantUser, CompanyUser } from "shared";
 import { useUserInfoActions } from "../../userInfo/userInfoHooks.js";
 import { useNavigate } from "react-router-dom";
 
@@ -24,14 +25,32 @@ const Login = () => {
             password: password,
         })
     });
+    const data = await response.json();
     if (response.ok) {
-        const data = await response.json()
         console.log(data)
-        // figure out how to navigate to proper landing page
-        // companies -> my jobs
-        // applicants -> job interests
+        if (data["profile"]["user_type"] == "applicant") {
+            const currUser = new ApplicantUser(
+              data["profile"]["user"]["first_name"],
+              data["profile"]["user"]["last_name"],
+              username,
+              password,
+              data["profile"]["user"]["email"],
+            );
+            updateUserInfo(currUser, data["token"]);
+            nav("/applicant/resume");
+        } else {
+            const currUser = new CompanyUser(
+              username,
+              password,
+              data["profile"]["user"]["email"],
+              data["profile"]["description"],
+            );
+            updateUserInfo(currUser, data["token"]);
+            nav("/company/jobs");
+        }
     } else {
         console.log("error");
+        console.log(data);
     }
     };
 

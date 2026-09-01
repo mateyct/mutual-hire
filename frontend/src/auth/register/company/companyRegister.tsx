@@ -39,7 +39,7 @@ const CompanyRegister = () => {
         console.log(data);
         company.userID = data["profile"]["id"];
         updateUserInfo(company, data["token"]);
-        nav("/company/account");
+        nav("/company/jobs");
       } else {
         console.log("SAD :(");
         console.log(data);
