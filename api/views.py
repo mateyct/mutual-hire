@@ -6,23 +6,57 @@
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny
 
-from .serializers import RegisterSerializer
-
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView
-from .models import UserProfile
+from .models import UserProfile, UserType, Job
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
 from .matching import find_matching_resumes_for_job
-from .serializers import ResumeSerializer
-from .models import Job
+from .serializers import ResumeSerializer, RegisterSerializer, JobSerializer
 
 # Create your views here.
 class RegisterView(CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+
+class JobView(APIView):
+    def get(self, request, job_id=None):
+        job = get_object_or_404(Job, pk=job_id)
+
+        serializer = JobSerializer(job)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request, job_id=None):
+        profile = get_object_or_404(UserProfile, user=request.user)
+        if profile.user_type != UserType.RECRUITER:
+            return Response(
+                {"message": "Must be a recruiter to update a job"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        job = None
+        if job_id is not None:
+            job = get_object_or_404(Job, pk=job_id)
+
+        if job is None:
+            serializer = JobSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(company=request.user)
+        else:
+            serializer = JobSerializer(
+                job,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(company=request.user)
+
+        response_status = status.HTTP_200_OK if job is not None else status.HTTP_201_CREATED
+        return Response(serializer.data, status=response_status)
 
 class MatchingResumes(APIView):
     def get(self, request):

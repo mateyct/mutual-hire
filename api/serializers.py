@@ -35,17 +35,17 @@ class RegisterSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
-        def validate(self, attrs):
-            request = self.context.get('request')
-            user_type = request.resolver_match.kwargs.get("user_type")
+    def validate(self, attrs):
+        request = self.context.get('request')
+        user_type = request.resolver_match.kwargs.get("user_type")
 
-            if user_type not in UserType.values:
-                raise serializers.ValidationError({
-                    "user_type": "User must be a recruiter or an applicant."
-                })
+        if user_type not in UserType.values:
+            raise serializers.ValidationError({
+                "user_type": "User must be a recruiter or an applicant."
+            })
 
-            attrs["profile_user_type"] = user_type
-            return attrs
+        attrs["profile_user_type"] = user_type
+        return attrs
 
     @transaction.atomic
     def create(self, validated_data):
