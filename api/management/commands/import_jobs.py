@@ -1,7 +1,14 @@
 import csv
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from api.models import UserProfile, UserType, Job
+from api.models import Job, Skill, UserProfile, UserType
+
+
+SKILLS_DELIMITER = '|'
+
+
+def parse_skills(value):
+    return [skill.strip() for skill in value.split(SKILLS_DELIMITER) if skill.strip()]
 
 class Command(BaseCommand):
     help = 'Import realistic jobs from a CSV file'
@@ -37,7 +44,7 @@ class Command(BaseCommand):
                 )
 
                 # 3. Create the Job
-                Job.objects.create(
+                job = Job.objects.create(
                     company=user,
                     title=row['title'],
                     location=row['location'],
@@ -45,6 +52,11 @@ class Command(BaseCommand):
                     type=row['type'],
                     description=row['description']
                 )
+
+                # Skills use | within the CSV cell so they do not conflict with
+                # the CSV column delimiter.
+                for skill_name in parse_skills(row.get('skills', '')):
+                    Skill.objects.create(job=job, skill=skill_name)
                 
                 self.stdout.write(self.style.SUCCESS(f"Processed job: {row['title']} at {user.username}"))
 
