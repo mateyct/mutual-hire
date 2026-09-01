@@ -3,6 +3,13 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from api.models import UserProfile, UserType, Resume, Skill, Experience, Education
 
+
+SKILLS_DELIMITER = '|'
+
+
+def parse_skills(value):
+    return [skill.strip() for skill in value.split(SKILLS_DELIMITER) if skill.strip()]
+
 class Command(BaseCommand):
     help = 'Import realistic resumes from a CSV file'
 
@@ -45,9 +52,10 @@ class Command(BaseCommand):
                     defaults={'summary': row['summary']}
                 )
 
-                # 4. Create Skills (Splits the comma-separated string)
+                # 4. Create Skills. The | delimiter avoids conflicts with the
+                # comma used to separate CSV columns.
                 if row.get('skills'):
-                    skills_list = [s.strip() for s in row['skills'].split(',') if s.strip()]
+                    skills_list = parse_skills(row['skills'])
                     for skill_name in skills_list:
                         Skill.objects.get_or_create(resume=resume, skill=skill_name)
                 
