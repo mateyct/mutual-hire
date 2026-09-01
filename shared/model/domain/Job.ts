@@ -1,4 +1,4 @@
-import { ApplicantUser } from "./ApplicantUser";
+import { ApplicantUser } from "./ApplicantUser.js";
 
 export enum JobType {
     fullTime = "Full Time",

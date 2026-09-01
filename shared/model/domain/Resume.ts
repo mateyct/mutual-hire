@@ -1,5 +1,5 @@
-import { Education } from "./Education";
-import { Experience } from "./Experience";
+import { Education } from "./Education.js";
+import { Experience } from "./Experience.js";
 
 export class Resume {
   private _userID: number | null;

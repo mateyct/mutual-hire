@@ -1,4 +1,4 @@
-import { Job, JobType } from "./Job"
+import { Job, JobType } from "./Job.js"
 
 export class CompanyUser {
     private _companyName: string;
