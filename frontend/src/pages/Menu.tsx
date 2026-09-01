@@ -12,7 +12,7 @@ return (
       ]}
       {userType === "ApplicantUser" && [
           <a className="menu-item" href="/resume">Resume</a>,
-          <a className="menu-item" href="/match">Match</a>,
+          <a className="menu-item" href="/api/matching/jobs">Match</a>,
           <a className="menu-item" href="/job-interests">Job Interests</a>,
       ]}
       
