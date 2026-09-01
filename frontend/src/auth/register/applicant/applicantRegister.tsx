@@ -6,7 +6,7 @@ const ApplicantRegister = () => {
     const { updateUserInfo } = useUserInfoActions();
     const nav = useNavigate();
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         const formData = new FormData(event.currentTarget);
@@ -20,10 +20,31 @@ const ApplicantRegister = () => {
 
         console.log(applicant);
 
-        // MAKE BACKEND CALL HERE AND FIX AUTH TOKEN!!!!
-
-        updateUserInfo("applicant", applicant.username, "fakeTOKEN");
-        nav("/applicant/account");
+        const response = await fetch(
+          "http://localhost:8000/api/auth/register/applicant/",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: applicant.username,
+              email: applicant.email,
+              first_name: applicant.firstName,
+              last_name: applicant.lastName,
+              password: applicant.password,
+              description: null
+            }),
+          },
+        );
+        const data = await response.json();
+        if (response.ok) {
+            console.log(data)
+            applicant.userID = data["profile"]["id"];
+            updateUserInfo(applicant, data["token"]);
+            nav("/applicant/account");
+        } else {
+            console.log("SAD :(")
+            console.log(data)
+        }
     };
 
     return (
