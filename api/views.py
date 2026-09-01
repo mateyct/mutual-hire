@@ -125,6 +125,8 @@ class ResumeView(APIView):
 
 
 class MatchingResumes(APIView):
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
         job_id = request.query_params.get("job_id")
         if not job_id:
@@ -134,10 +136,16 @@ class MatchingResumes(APIView):
 
 
 class MatchingJobs(APIView):
-    def get(self, request):
-        resume_id = request.query_params.get('resume_id')
+    permission_classes = [IsAuthenticated]
 
-        resume = Resume.objects.get(pk=resume_id)
+    def get(self, request):
+        try:
+            resume = request.user.resumes 
+        except Resume.DoesNotExist:
+            return Response(
+                {"error": "You do not have a resume set up yet."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         ranked_jobs = find_matching_jobs_for_resume(resume)
 

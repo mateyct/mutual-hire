@@ -44,22 +44,7 @@ function App() {
         <Route path="/applicant/interested" element={<Interested />} />
         <Route
           path="/applicant/match"
-          element={
-            <Match
-              proposedMatch={{
-                type: "job",
-                job: {
-                  title: "Sample Role",
-                  location: "Remote",
-                  payPerYear: 120000,
-                  type: "fullTime",
-                  description: "Sample match placeholder",
-                  skillsNeeded: ["React", "TypeScript"],
-                },
-                company: { name: "Example Company" },
-              }}
-            />
-          }
+          element={<Match/>}
         />
       </Routes>
     );
