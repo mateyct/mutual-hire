@@ -39,8 +39,12 @@ class JobView(APIView):
             )
 
         job = None
+
         if job_id is not None:
-            job = get_object_or_404(Job, pk=job_id)
+            job = Job.objects.filter(
+                pk=job_id,
+                company=request.user,
+            ).first()
 
         if job is None:
             serializer = JobSerializer(data=request.data)
