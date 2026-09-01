@@ -1,6 +1,7 @@
 import { useState } from "react";
 import SideMenu from "../pages/Menu.js";
 import { useUserInfo } from "../userInfo/userInfoHooks.js";
+import "./Resume.css";
 
 type ExperienceTypeValue = "full_time" | "part_time" | "internship";
 
@@ -210,7 +211,11 @@ const ResumePage = () => {
           );
         }
 
-        if (entry.type !== "full_time" && entry.type !== "part_time" && entry.type !== "internship") {
+        if (
+          entry.type !== "full_time" &&
+          entry.type !== "part_time" &&
+          entry.type !== "internship"
+        ) {
           throw new Error("Experience type must be either job or project.");
         }
 
@@ -286,91 +291,55 @@ const ResumePage = () => {
   return (
     <>
       <SideMenu userType="applicant" />
-      <div
-        style={{
-          minHeight: "100vh",
-          padding: "10px",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "900px",
-            margin: "0 auto",
-            background: "#ffffff",
-            borderRadius: "10px",
-            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
-            padding: "20px",
-          }}
-        >
-          <h1 style={{ margin: "0 0 8px", fontSize: "2rem" }}>
-            Create your resume
-          </h1>
-          <p style={{ margin: "0 0 24px", color: "#475569" }}>
+      <div className="resume-page">
+        <div className="resume-shell">
+          <h1 className="resume-heading">Create your resume</h1>
+          <p className="resume-subtitle">
             Add your personal summary, experience, education, and skills.
           </p>
 
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: "grid", gap: "24px" }}
-          >
-            <section>
-              <h2 style={{ marginBottom: "12px" }}>Personal summary</h2>
+          <form onSubmit={handleSubmit} className="resume-form">
+            <section className="resume-section">
+              <h2 className="resume-section-heading">Personal summary</h2>
               <textarea
                 value={personalSummary}
                 onChange={(event) => setPersonalSummary(event.target.value)}
                 placeholder="Describe yourself and your career goals"
                 rows={5}
                 required
-                style={{ ...inputStyle, resize: "vertical" }}
+                className="resume-textarea"
               />
             </section>
 
-            <section>
-              <h2 style={{ marginBottom: "12px" }}>Skills</h2>
-              <div style={{ display: "grid", gap: "12px" }}>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            <section className="resume-section">
+              <h2 className="resume-section-heading">Skills</h2>
+              <div className="resume-section">
+                <div className="resume-skill-list">
                   {skills.length > 0 ? (
                     skills.map((skill, index) => (
                       <span
                         key={`${skill}-${index}`}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          background: "#f3f4f6",
-                          borderRadius: "999px",
-                          padding: "6px 10px",
-                          fontSize: "14px",
-                          color: "#111827",
-                        }}
+                        className="resume-skill-tag"
                       >
                         {skill}
                         <button
                           type="button"
                           onClick={() => removeSkill(skill)}
                           aria-label={`Remove ${skill}`}
-                          style={{
-                            border: "none",
-                            background: "transparent",
-                            color: "#374151",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                            lineHeight: 1,
-                            padding: 0,
-                          }}
+                          className="resume-skill-remove"
                         >
                           ×
                         </button>
                       </span>
                     ))
                   ) : (
-                    <span style={{ color: "#6b7280" }}>
+                    <span className="resume-skill-empty">
                       No skills added yet.
                     </span>
                   )}
                 </div>
 
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div className="resume-skill-input-row">
                   <input
                     type="text"
                     value={skillInput}
@@ -382,12 +351,12 @@ const ResumePage = () => {
                       }
                     }}
                     placeholder="Add a skill and press Enter"
-                    style={{ ...inputStyle, flex: 1 }}
+                    className="resume-input resume-skill-input"
                   />
                   <button
                     type="button"
                     onClick={addSkill}
-                    style={secondaryButtonStyle}
+                    className="resume-button-secondary"
                   >
                     Add skill
                   </button>
@@ -396,19 +365,12 @@ const ResumePage = () => {
             </section>
 
             <section>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "12px",
-                }}
-              >
-                <h2 style={{ margin: 0 }}>Education</h2>
+              <div className="resume-section-header">
+                <h2 className="resume-section-heading">Education</h2>
                 <button
                   type="button"
                   onClick={addEducationEntry}
-                  style={secondaryButtonStyle}
+                  className="resume-button-secondary"
                 >
                   + Add education
                 </button>
@@ -416,9 +378,11 @@ const ResumePage = () => {
 
               <div style={{ display: "grid", gap: "18px" }}>
                 {unsavedEducation.map((entry) => (
-                  <div key={entry.id} style={draftCardStyle}>
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>School / university</label>
+                  <div key={entry.id} className="resume-draft-card">
+                    <div className="resume-field-row">
+                      <label className="resume-label">
+                        School / university
+                      </label>
                       <input
                         type="text"
                         value={entry.title}
@@ -429,12 +393,12 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Degree</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Degree</label>
                       <input
                         type="text"
                         value={entry.degree}
@@ -445,12 +409,12 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Major</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Major</label>
                       <input
                         type="text"
                         value={entry.major}
@@ -461,12 +425,12 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>GPA</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">GPA</label>
                       <input
                         type="number"
                         step="0.01"
@@ -480,19 +444,13 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: "14px",
-                      }}
-                    >
-                      <div style={fieldRowStyle}>
-                        <label style={labelStyle}>Start date</label>
+                    <div className="resume-two-col">
+                      <div className="resume-field-row">
+                        <label className="resume-label">Start date</label>
                         <input
                           type="date"
                           value={entry.start}
@@ -503,11 +461,11 @@ const ResumePage = () => {
                               event.target.value,
                             )
                           }
-                          style={inputStyle}
+                          className="resume-input"
                         />
                       </div>
-                      <div style={fieldRowStyle}>
-                        <label style={labelStyle}>End date</label>
+                      <div className="resume-field-row">
+                        <label className="resume-label">End date</label>
                         <input
                           type="date"
                           value={entry.end}
@@ -518,13 +476,13 @@ const ResumePage = () => {
                               event.target.value,
                             )
                           }
-                          style={inputStyle}
+                          className="resume-input"
                         />
                       </div>
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Description</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Description</label>
                       <textarea
                         value={entry.description}
                         onChange={(event) =>
@@ -535,24 +493,22 @@ const ResumePage = () => {
                           )
                         }
                         rows={3}
-                        style={{ ...inputStyle, resize: "vertical" }}
+                        className="resume-textarea"
                       />
                     </div>
 
-                    <div
-                      style={{ display: "flex", gap: "10px", marginTop: "8px" }}
-                    >
+                    <div className="resume-actions">
                       <button
                         type="button"
                         onClick={() => saveEducationEntry(entry.id)}
-                        style={primaryButtonStyle}
+                        className="resume-button-primary"
                       >
                         Save education
                       </button>
                       <button
                         type="button"
                         onClick={() => removeEducationEntry(entry.id)}
-                        style={dangerButtonStyle}
+                        className="resume-button-danger"
                       >
                         Remove
                       </button>
@@ -561,19 +517,13 @@ const ResumePage = () => {
                 ))}
 
                 {savedEducation.map((entry) => (
-                  <div key={entry.id} style={savedCardStyle}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: "8px",
-                      }}
-                    >
+                  <div key={entry.id} className="resume-saved-card">
+                    <div className="resume-card-header">
                       <strong>Education</strong>
                       <button
                         type="button"
                         onClick={() => removeEducationEntry(entry.id)}
-                        style={miniRemoveButtonStyle}
+                        className="resume-mini-button"
                       >
                         ×
                       </button>
@@ -591,19 +541,12 @@ const ResumePage = () => {
             </section>
 
             <section>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "12px",
-                }}
-              >
-                <h2 style={{ margin: 0 }}>Experience</h2>
+              <div className="resume-section-header">
+                <h2 className="resume-section-heading">Experience</h2>
                 <button
                   type="button"
                   onClick={addExperienceEntry}
-                  style={secondaryButtonStyle}
+                  className="resume-button-secondary"
                 >
                   + Add experience
                 </button>
@@ -611,9 +554,9 @@ const ResumePage = () => {
 
               <div style={{ display: "grid", gap: "18px" }}>
                 {unsavedExperience.map((entry) => (
-                  <div key={entry.id} style={draftCardStyle}>
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Title</label>
+                  <div key={entry.id} className="resume-draft-card">
+                    <div className="resume-field-row">
+                      <label className="resume-label">Title</label>
                       <input
                         type="text"
                         value={entry.title}
@@ -624,12 +567,12 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Company</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Company</label>
                       <input
                         type="text"
                         value={entry.company}
@@ -640,12 +583,12 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Type</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Type</label>
                       <select
                         value={entry.type}
                         onChange={(event) =>
@@ -655,22 +598,19 @@ const ResumePage = () => {
                             event.target.value as ExperienceTypeValue,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-select"
                       >
-                        <option value="job">job</option>
-                        <option value="project">project</option>
+                        <option value="full_time">full_time</option>
+                        <option value="part_time">part_time</option>
+                        <option value="internship">internship</option>
                       </select>
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Currently employed here</label>
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
+                    <div className="resume-field-row">
+                      <label className="resume-label">
+                        Currently employed here
+                      </label>
+                      <label className="resume-checkbox-row">
                         <input
                           type="checkbox"
                           checked={entry.currentJob}
@@ -686,15 +626,9 @@ const ResumePage = () => {
                       </label>
                     </div>
 
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: "14px",
-                      }}
-                    >
-                      <div style={fieldRowStyle}>
-                        <label style={labelStyle}>Start date</label>
+                    <div className="resume-two-col">
+                      <div className="resume-field-row">
+                        <label className="resume-label">Start date</label>
                         <input
                           type="date"
                           value={entry.start}
@@ -705,11 +639,11 @@ const ResumePage = () => {
                               event.target.value,
                             )
                           }
-                          style={inputStyle}
+                          className="resume-input"
                         />
                       </div>
-                      <div style={fieldRowStyle}>
-                        <label style={labelStyle}>End date</label>
+                      <div className="resume-field-row">
+                        <label className="resume-label">End date</label>
                         <input
                           type="date"
                           value={entry.end}
@@ -721,16 +655,13 @@ const ResumePage = () => {
                               event.target.value,
                             )
                           }
-                          style={{
-                            ...inputStyle,
-                            opacity: entry.currentJob ? 0.6 : 1,
-                          }}
+                          className={`resume-input ${entry.currentJob ? "resume-disabled-input" : ""}`}
                         />
                       </div>
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Description</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Description</label>
                       <textarea
                         value={entry.description}
                         onChange={(event) =>
@@ -741,24 +672,22 @@ const ResumePage = () => {
                           )
                         }
                         rows={4}
-                        style={{ ...inputStyle, resize: "vertical" }}
+                        className="resume-textarea"
                       />
                     </div>
 
-                    <div
-                      style={{ display: "flex", gap: "10px", marginTop: "8px" }}
-                    >
+                    <div className="resume-actions">
                       <button
                         type="button"
                         onClick={() => saveExperienceEntry(entry.id)}
-                        style={primaryButtonStyle}
+                        className="resume-button-primary"
                       >
                         Save experience
                       </button>
                       <button
                         type="button"
                         onClick={() => removeExperienceEntry(entry.id)}
-                        style={dangerButtonStyle}
+                        className="resume-button-danger"
                       >
                         Remove
                       </button>
@@ -767,19 +696,13 @@ const ResumePage = () => {
                 ))}
 
                 {savedExperience.map((entry) => (
-                  <div key={entry.id} style={savedCardStyle}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: "8px",
-                      }}
-                    >
+                  <div key={entry.id} className="resume-saved-card">
+                    <div className="resume-card-header">
                       <strong>Experience</strong>
                       <button
                         type="button"
                         onClick={() => removeExperienceEntry(entry.id)}
-                        style={miniRemoveButtonStyle}
+                        className="resume-mini-button"
                       >
                         ×
                       </button>
@@ -797,17 +720,13 @@ const ResumePage = () => {
             </section>
 
             {submitError ? (
-              <div style={{ color: "#b91c1c", fontWeight: 600 }}>
-                {submitError}
-              </div>
+              <div className="resume-status-error">{submitError}</div>
             ) : null}
             {submitSuccess ? (
-              <div style={{ color: "#15803d", fontWeight: 600 }}>
-                {submitSuccess}
-              </div>
+              <div className="resume-status-success">{submitSuccess}</div>
             ) : null}
 
-            <button type="submit" style={primaryButtonStyle}>
+            <button type="submit" className="resume-button-primary">
               Save resume
             </button>
           </form>
@@ -815,85 +734,6 @@ const ResumePage = () => {
       </div>
     </>
   );
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "12px 14px",
-  fontSize: "1rem",
-  border: "1px solid #cbd5e1",
-  borderRadius: "10px",
-  boxSizing: "border-box",
-  background: "#ffffff",
-  color: "#111827",
-};
-
-const draftCardStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "14px",
-  border: "1px solid #e2e8f0",
-  borderRadius: "12px",
-  padding: "18px",
-  background: "#f8fafc",
-};
-
-const savedCardStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "6px",
-  border: "1px solid #dbeafe",
-  borderRadius: "10px",
-  padding: "12px 14px",
-  background: "#eff6ff",
-  color: "#1e293b",
-};
-
-const fieldRowStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "8px",
-};
-
-const labelStyle: React.CSSProperties = {
-  fontWeight: 600,
-  color: "#1e293b",
-};
-
-const primaryButtonStyle: React.CSSProperties = {
-  padding: "12px 20px",
-  border: "none",
-  borderRadius: "10px",
-  background: "#2563eb",
-  color: "#fff",
-  fontSize: "1rem",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const secondaryButtonStyle: React.CSSProperties = {
-  padding: "10px 14px",
-  border: "1px solid #cbd5e1",
-  borderRadius: "10px",
-  background: "#f8fafc",
-  cursor: "pointer",
-  color: "#111827",
-  fontWeight: 600,
-};
-
-const dangerButtonStyle: React.CSSProperties = {
-  padding: "10px 14px",
-  border: "1px solid #fecaca",
-  borderRadius: "10px",
-  background: "#fff1f2",
-  color: "#b91c1c",
-  cursor: "pointer",
-};
-
-const miniRemoveButtonStyle: React.CSSProperties = {
-  border: "none",
-  background: "transparent",
-  color: "#374151",
-  cursor: "pointer",
-  fontSize: "18px",
-  lineHeight: 1,
 };
 
 export default ResumePage;
