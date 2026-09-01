@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SideMenu from "../Menu.js";
 import { Job } from "shared";
 import { useUserInfo } from "../../userInfo/userInfoHooks.js";
 
+type JobListing = Job & { id: number };
+
 const Jobs = () => {
   const navigate = useNavigate();
   const { user, auth } = useUserInfo();
-  const [jobListings, setJobListings] = useState<Job[]>([]);
+  const [jobListings, setJobListings] = useState<JobListing[]>([]);
 
   useEffect(() => {
     const fetchJobListings = async () => {
@@ -22,8 +24,9 @@ const Jobs = () => {
       if (response.ok) {
         const companyUserID =
           (user as { _userID?: number | null } | null)?._userID ?? null;
-        const jobs: Job[] = data.map(
+        const jobs: JobListing[] = data.map(
           (job: {
+            id: number;
             title: string;
             jobTitle?: string;
             location: string;
@@ -34,14 +37,17 @@ const Jobs = () => {
             skills: string[];
             skillsNeeded?: string[];
           }) =>
-            new Job(
-              job.title ?? job.jobTitle,
-              companyUserID,
-              job.location,
-              job.pay ?? job.payPerYear,
-              job.type,
-              job.description,
-              job.skills ?? job.skillsNeeded,
+            Object.assign(
+              new Job(
+                job.title ?? job.jobTitle,
+                companyUserID,
+                job.location,
+                job.pay ?? job.payPerYear,
+                job.type,
+                job.description,
+                job.skills ?? job.skillsNeeded,
+              ),
+              { id: job.id },
             ),
         );
         setJobListings(jobs);
@@ -148,6 +154,18 @@ const Jobs = () => {
                 <p style={{ margin: 0, color: "#475569" }}>
                   ${job.payPerYear.toLocaleString()} / year
                 </p>
+                <Link
+                  to={`/company/match?job_id=${job.id}`}
+                  style={{
+                    display: "inline-block",
+                    marginTop: "12px",
+                    color: "#2563eb",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  View matches
+                </Link>
               </div>
             ))}
           </div>
