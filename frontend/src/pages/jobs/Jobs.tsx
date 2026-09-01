@@ -8,7 +8,7 @@ const Jobs = () => {
 
   return (
     <>
-      <SideMenu userType="CompanyUser" />
+      <SideMenu userType="company" />
       <div
         style={{
           minHeight: "100vh",

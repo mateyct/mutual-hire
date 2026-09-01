@@ -19,7 +19,7 @@ type ProposedMatch =
 const Match = ({ proposedMatch }: { proposedMatch: ProposedMatch }) => {
   return (
     <>
-      <SideMenu userType="ApplicantUser" />
+      <SideMenu userType="applicant" />
       <div className="match-container">
         <div className="match-content">
           {proposedMatch.type === "applicant" && (

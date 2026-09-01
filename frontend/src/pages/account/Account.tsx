@@ -1,10 +1,10 @@
 import { useState } from "react";
 import SideMenu from "../Menu.js";
 
-type UserType = "ApplicantUser" | "CompanyUser";
+type UserType = "applicant" | "company";
 
 const Account = ({ userType }: { userType: UserType }) => {
-  const isApplicant = userType === "ApplicantUser";
+  const isApplicant = userType === "applicant";
 
   const [formData, setFormData] = useState({
     username: "",

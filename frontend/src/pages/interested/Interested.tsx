@@ -8,7 +8,7 @@ const Interested = () => {
 
   return (
     <>
-      <SideMenu userType="ApplicantUser" />
+      <SideMenu userType="applicant" />
       <div
         style={{
           minHeight: "100vh",

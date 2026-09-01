@@ -25,7 +25,7 @@ function App() {
         <Routes>
           <Route
             path="/company/account"
-            element={<Account userType="CompanyUser" />}
+            element={<Account userType="company" />}
           />
           <Route path="/company/jobs" element={<Jobs />} />
           <Route path="/company/job" element={<JobPage />} />
@@ -37,7 +37,7 @@ function App() {
       <Routes>
         <Route
           path="/applicant/account"
-          element={<Account userType="ApplicantUser" />}
+          element={<Account userType="applicant" />}
         />
         <Route path="/applicant/resume" element={<Resume />} />
         <Route path="/applicant/interested" element={<Interested />} />
