@@ -37,7 +37,7 @@ const SideMenu = ({ userType }: { userType: string }) => {
       >
         Account
       </Link>
-      <Link className="menu-item" to="/">
+      <Link className="menu-item" to="/" reloadDocument={true}>
         Log Out
       </Link>
     </Menu>
