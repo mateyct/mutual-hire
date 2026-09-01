@@ -209,14 +209,12 @@ class GetMatchesForJobView(APIView):
         )
 
 class GetMatchesForResumeView(APIView):
-    def get(self, request, resume_id):
+    def get(self, request):
         profile = get_object_or_404(UserProfile, user=request.user)
         if profile.user_type != UserType.APPLICANT:
             return unauthorized("Only applicants can search job matches.")
 
-        resume = get_object_or_404(Resume, pk=resume_id)
-        if resume.owner != request.user:
-            return Response({"error": "You don't own this resume."}, status=status.HTTP_403_FORBIDDEN)
+        resume = get_object_or_404(Resume, owner=request.user)
 
         return Response(MatchSerializer(Match.objects.filter(
             resume=resume,

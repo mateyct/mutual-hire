@@ -299,13 +299,13 @@ objects described above. They never contain vector embeddings.
 
 ### List an applicant's mutual matches
 
-`GET /api/matches/applicant/{resume_id}/`
+`GET /api/matches/applicant/`
 
-Applicant and resume owner only. Returns `200 OK` with an array of Match objects
-for which both parties expressed interest. The array is empty when there are no
-mutual matches. Returns `401` when the authenticated user is not an applicant,
-`404` when the resume does not exist, and `403` when it belongs to another
-applicant.
+Applicant only. The resume is resolved from the authenticated user; no resume ID
+is required. Returns `200 OK` with an array of Match objects for which both
+parties expressed interest. The array is empty when there are no mutual matches.
+Returns `401` when the authenticated user is not an applicant and `404` when the
+applicant does not have a resume.
 
 ### List a recruiter's mutual matches
 
