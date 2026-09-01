@@ -1,19 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SideMenu from "../pages/Menu.js";
-import {
-  DegreeType,
-  Education,
-  Experience,
-  ExperienceType,
-  Resume as ResumeModel,
-} from "shared";
+import { useUserInfo } from "../userInfo/userInfoHooks.js";
+import "./Resume.css";
+
+type ExperienceTypeValue = "job" | "project";
 
 type EducationDraft = {
   id: number;
-  school: string;
+  title: string;
   degree: string;
-  degreeType: DegreeType;
-  focus: string;
+  major: string;
   gpa: string;
   start: string;
   end: string;
@@ -27,17 +23,45 @@ type ExperienceDraft = {
   company: string;
   start: string;
   end: string;
+  currentJob: boolean;
   description: string;
-  type: ExperienceType;
+  type: ExperienceTypeValue;
   saved: boolean;
 };
 
+type ResumeResponse = {
+  id: number;
+  summary: string;
+  skills: string[];
+  education: Array<{
+    id: number;
+    title: string;
+    degree: string;
+    major: string;
+    gpa: string | null;
+    start_date: string;
+    end_date: string | null;
+    description: string;
+  }>;
+  experience: Array<{
+    id: number;
+    title: string;
+    company: string;
+    start_date: string;
+    end_date: string | null;
+    current_job: boolean;
+    description: string;
+    type: ExperienceTypeValue;
+  }>;
+};
+
+const API_BASE_URL = "http://localhost:8000/api";
+
 const createEmptyEducation = (id: number): EducationDraft => ({
   id,
-  school: "",
+  title: "",
   degree: "",
-  degreeType: DegreeType.Bachelors,
-  focus: "",
+  major: "",
   gpa: "",
   start: "",
   end: "",
@@ -51,12 +75,16 @@ const createEmptyExperience = (id: number): ExperienceDraft => ({
   company: "",
   start: "",
   end: "",
+  currentJob: false,
   description: "",
-  type: ExperienceType.fullTime,
+  type: "job",
   saved: false,
 });
 
 const ResumePage = () => {
+  const { auth, user } = useUserInfo();
+  const [resumeId, setResumeId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [personalSummary, setPersonalSummary] = useState("");
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
@@ -66,6 +94,97 @@ const ResumePage = () => {
   const [experienceEntries, setExperienceEntries] = useState<ExperienceDraft[]>(
     [],
   );
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!auth) {
+      setIsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const loadResume = async () => {
+      setIsLoading(true);
+      setSubmitError(null);
+
+      try {
+        let userId = user?.userID ?? null;
+
+        if (userId === null) {
+          const profileResponse = await fetch(`${API_BASE_URL}/user/`, {
+            headers: { Authorization: `Token ${auth}` },
+            signal: controller.signal,
+          });
+          if (!profileResponse.ok) {
+            throw new Error("Your user profile could not be loaded.");
+          }
+          const profile = await profileResponse.json();
+          userId = profile.user.id;
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/user/${userId}/resume/`,
+          {
+            headers: { Authorization: `Token ${auth}` },
+            signal: controller.signal,
+          },
+        );
+
+        if (response.status === 404) {
+          setResumeId(null);
+          return;
+        }
+        if (!response.ok) {
+          throw new Error("Your existing resume could not be loaded.");
+        }
+
+        const resume: ResumeResponse = await response.json();
+        setResumeId(resume.id);
+        setPersonalSummary(resume.summary);
+        setSkills(resume.skills);
+        setEducationEntries(
+          resume.education.map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            degree: entry.degree,
+            major: entry.major,
+            gpa: entry.gpa ?? "",
+            start: entry.start_date,
+            end: entry.end_date ?? "",
+            description: entry.description,
+            saved: true,
+          })),
+        );
+        setExperienceEntries(
+          resume.experience.map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            company: entry.company,
+            start: entry.start_date,
+            end: entry.end_date ?? "",
+            currentJob: entry.current_job,
+            description: entry.description,
+            type: entry.type,
+            saved: true,
+          })),
+        );
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "Your existing resume could not be loaded.",
+        );
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+
+    void loadResume();
+    return () => controller.abort();
+  }, [auth, user]);
 
   const addSkill = () => {
     const trimmedSkill = skillInput.trim();
@@ -95,7 +214,7 @@ const ResumePage = () => {
   const updateEducationEntry = (
     id: number,
     field: keyof Omit<EducationDraft, "id" | "saved">,
-    value: string | DegreeType,
+    value: string,
   ) => {
     setEducationEntries((previous) =>
       previous.map((entry) =>
@@ -108,6 +227,14 @@ const ResumePage = () => {
     setEducationEntries((previous) =>
       previous.map((entry) =>
         entry.id === id ? { ...entry, saved: true } : entry,
+      ),
+    );
+  };
+
+  const editEducationEntry = (id: number) => {
+    setEducationEntries((previous) =>
+      previous.map((entry) =>
+        entry.id === id ? { ...entry, saved: false } : entry,
       ),
     );
   };
@@ -128,7 +255,7 @@ const ResumePage = () => {
   const updateExperienceEntry = (
     id: number,
     field: keyof Omit<ExperienceDraft, "id" | "saved">,
-    value: string | ExperienceType,
+    value: string | boolean | ExperienceTypeValue,
   ) => {
     setExperienceEntries((previous) =>
       previous.map((entry) =>
@@ -145,50 +272,156 @@ const ResumePage = () => {
     );
   };
 
+  const editExperienceEntry = (id: number) => {
+    setExperienceEntries((previous) =>
+      previous.map((entry) =>
+        entry.id === id ? { ...entry, saved: false } : entry,
+      ),
+    );
+  };
+
   const removeExperienceEntry = (id: number) => {
     setExperienceEntries((previous) =>
       previous.filter((entry) => entry.id !== id),
     );
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const buildResumePayload = () => {
+    const validEducation = educationEntries
+      .filter((entry) => entry.saved)
+      .map((entry) => {
+        if (
+          !entry.title.trim() ||
+          !entry.degree.trim() ||
+          !entry.major.trim()
+        ) {
+          throw new Error(
+            "Each saved education entry needs a school, degree, and major.",
+          );
+        }
+
+        if (!entry.start) {
+          throw new Error("Each saved education entry needs a start date.");
+        }
+
+        const gpaValue = entry.gpa.trim();
+        const numericGpa = gpaValue ? Number(gpaValue) : null;
+        if (
+          gpaValue &&
+          (numericGpa === null ||
+            Number.isNaN(numericGpa) ||
+            numericGpa < 0 ||
+            numericGpa > 4)
+        ) {
+          throw new Error("Education GPA must be between 0 and 4.");
+        }
+
+        return {
+          title: entry.title.trim(),
+          degree: entry.degree.trim(),
+          major: entry.major.trim(),
+          gpa: numericGpa,
+          start_date: entry.start,
+          end_date: entry.end || null,
+          description: entry.description.trim(),
+        };
+      });
+
+    const validExperience = experienceEntries
+      .filter((entry) => entry.saved)
+      .map((entry) => {
+        if (!entry.title.trim() || !entry.company.trim()) {
+          throw new Error(
+            "Each saved experience entry needs a title and company.",
+          );
+        }
+
+        if (!entry.start) {
+          throw new Error("Each saved experience entry needs a start date.");
+        }
+
+        if (!entry.currentJob && !entry.end) {
+          throw new Error(
+            "Experience end date is required unless the job is current.",
+          );
+        }
+
+        if (
+          entry.type !== "job" &&
+          entry.type !== "project"
+        ) {
+          throw new Error("Experience type must be either job or project.");
+        }
+
+        return {
+          title: entry.title.trim(),
+          company: entry.company.trim(),
+          start_date: entry.start,
+          end_date: entry.currentJob ? null : entry.end,
+          current_job: entry.currentJob,
+          description: entry.description.trim(),
+          type: entry.type,
+        };
+      });
+
+    if (!personalSummary.trim()) {
+      throw new Error("Personal summary is required.");
+    }
+
+    return {
+      summary: personalSummary.trim(),
+      experience: validExperience,
+      education: validEducation,
+      skills: skills.map((skill) => skill.trim()).filter(Boolean),
+    };
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitError(null);
+    setSubmitSuccess(null);
 
-    const resume = new ResumeModel(null, personalSummary);
+    if (!auth) {
+      setSubmitError("You must be logged in to save your resume.");
+      return;
+    }
 
-    educationEntries
-      .filter((entry) => entry.saved)
-      .forEach((entry) => {
-        const education = new Education(
-          entry.school,
-          entry.degree,
-          entry.degreeType,
-          entry.focus,
-          Number(entry.gpa || 0),
-          new Date(entry.start),
-          new Date(entry.end),
-          entry.description,
-        );
-        resume.addEducation(education);
+    try {
+      const payload = buildResumePayload();
+
+      const endpoint = resumeId
+        ? `${API_BASE_URL}/resume/${resumeId}/`
+        : `${API_BASE_URL}/resume/`;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${auth}`,
+        },
+        body: JSON.stringify(payload),
       });
 
-    experienceEntries
-      .filter((entry) => entry.saved)
-      .forEach((entry) => {
-        const experience = new Experience(
-          entry.title,
-          entry.company,
-          new Date(entry.start),
-          new Date(entry.end),
-          entry.description,
-          entry.type,
-        );
-        resume.addExperience(experience);
-      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const message =
+          errorData?.detail ||
+          errorData?.non_field_errors?.[0] ||
+          "The resume could not be saved.";
+        throw new Error(message);
+      }
 
-    skills.forEach((skill) => resume.addSkill(skill));
-
-    console.log("Resume data:", resume);
+      const savedResume: ResumeResponse = await response.json();
+      setResumeId(savedResume.id);
+      setSubmitSuccess(
+        resumeId ? "Resume updated successfully." : "Resume saved successfully.",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The resume could not be saved.";
+      setSubmitError(message);
+    }
   };
 
   const unsavedEducation = educationEntries.filter((entry) => !entry.saved);
@@ -199,91 +432,62 @@ const ResumePage = () => {
   return (
     <>
       <SideMenu userType="applicant" />
-      <div
-        style={{
-          minHeight: "100vh",
-          padding: "10px",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "900px",
-            margin: "0 auto",
-            background: "#ffffff",
-            borderRadius: "10px",
-            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
-            padding: "20px",
-          }}
-        >
-          <h1 style={{ margin: "0 0 8px", fontSize: "2rem" }}>
-            Create your resume
+      <div className="resume-page">
+        <div className="resume-shell">
+          <h1 className="resume-heading">
+            {resumeId ? "Edit your resume" : "Create your resume"}
           </h1>
-          <p style={{ margin: "0 0 24px", color: "#475569" }}>
+          <p className="resume-subtitle">
             Add your personal summary, experience, education, and skills.
           </p>
 
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: "grid", gap: "24px" }}
-          >
-            <section>
-              <h2 style={{ marginBottom: "12px" }}>Personal summary</h2>
+          {isLoading ? (
+            <p className="resume-subtitle">Loading your resume…</p>
+          ) : null}
+
+          {!isLoading ? (
+          <form onSubmit={handleSubmit} className="resume-form">
+            <section className="resume-section">
+              <h2 className="resume-section-heading">Personal summary</h2>
               <textarea
                 value={personalSummary}
                 onChange={(event) => setPersonalSummary(event.target.value)}
                 placeholder="Describe yourself and your career goals"
                 rows={5}
                 required
-                style={{ ...inputStyle, resize: "vertical" }}
+                className="resume-textarea"
               />
             </section>
 
-            <section>
-              <h2 style={{ marginBottom: "12px" }}>Skills</h2>
-              <div style={{ display: "grid", gap: "12px" }}>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            <section className="resume-section">
+              <h2 className="resume-section-heading">Skills</h2>
+              <div className="resume-section">
+                <div className="resume-skill-list">
                   {skills.length > 0 ? (
                     skills.map((skill, index) => (
                       <span
                         key={`${skill}-${index}`}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          background: "#f3f4f6",
-                          borderRadius: "999px",
-                          padding: "6px 10px",
-                          fontSize: "14px",
-                          color: "#111827",
-                        }}
+                        className="resume-skill-tag"
                       >
                         {skill}
                         <button
                           type="button"
                           onClick={() => removeSkill(skill)}
                           aria-label={`Remove ${skill}`}
-                          style={{
-                            border: "none",
-                            background: "transparent",
-                            color: "#374151",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                            lineHeight: 1,
-                            padding: 0,
-                          }}
+                          className="resume-skill-remove"
                         >
                           ×
                         </button>
                       </span>
                     ))
                   ) : (
-                    <span style={{ color: "#6b7280" }}>
+                    <span className="resume-skill-empty">
                       No skills added yet.
                     </span>
                   )}
                 </div>
 
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div className="resume-skill-input-row">
                   <input
                     type="text"
                     value={skillInput}
@@ -295,12 +499,12 @@ const ResumePage = () => {
                       }
                     }}
                     placeholder="Add a skill and press Enter"
-                    style={{ ...inputStyle, flex: 1 }}
+                    className="resume-input resume-skill-input"
                   />
                   <button
                     type="button"
                     onClick={addSkill}
-                    style={secondaryButtonStyle}
+                    className="resume-button-secondary"
                   >
                     Add skill
                   </button>
@@ -309,19 +513,12 @@ const ResumePage = () => {
             </section>
 
             <section>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "12px",
-                }}
-              >
-                <h2 style={{ margin: 0 }}>Education</h2>
+              <div className="resume-section-header">
+                <h2 className="resume-section-heading">Education</h2>
                 <button
                   type="button"
                   onClick={addEducationEntry}
-                  style={secondaryButtonStyle}
+                  className="resume-button-secondary"
                 >
                   + Add education
                 </button>
@@ -329,25 +526,27 @@ const ResumePage = () => {
 
               <div style={{ display: "grid", gap: "18px" }}>
                 {unsavedEducation.map((entry) => (
-                  <div key={entry.id} style={draftCardStyle}>
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>School</label>
+                  <div key={entry.id} className="resume-draft-card">
+                    <div className="resume-field-row">
+                      <label className="resume-label">
+                        School / university
+                      </label>
                       <input
                         type="text"
-                        value={entry.school}
+                        value={entry.title}
                         onChange={(event) =>
                           updateEducationEntry(
                             entry.id,
-                            "school",
+                            "title",
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Degree</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Degree</label>
                       <input
                         type="text"
                         value={entry.degree}
@@ -358,49 +557,28 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Degree type</label>
-                      <select
-                        value={entry.degreeType}
-                        onChange={(event) =>
-                          updateEducationEntry(
-                            entry.id,
-                            "degreeType",
-                            event.target.value as DegreeType,
-                          )
-                        }
-                        style={inputStyle}
-                      >
-                        {Object.values(DegreeType).map((degreeType) => (
-                          <option key={degreeType} value={degreeType}>
-                            {degreeType}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Focus</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Major</label>
                       <input
                         type="text"
-                        value={entry.focus}
+                        value={entry.major}
                         onChange={(event) =>
                           updateEducationEntry(
                             entry.id,
-                            "focus",
+                            "major",
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>GPA</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">GPA</label>
                       <input
                         type="number"
                         step="0.01"
@@ -414,19 +592,13 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: "14px",
-                      }}
-                    >
-                      <div style={fieldRowStyle}>
-                        <label style={labelStyle}>Start date</label>
+                    <div className="resume-two-col">
+                      <div className="resume-field-row">
+                        <label className="resume-label">Start date</label>
                         <input
                           type="date"
                           value={entry.start}
@@ -437,11 +609,11 @@ const ResumePage = () => {
                               event.target.value,
                             )
                           }
-                          style={inputStyle}
+                          className="resume-input"
                         />
                       </div>
-                      <div style={fieldRowStyle}>
-                        <label style={labelStyle}>End date</label>
+                      <div className="resume-field-row">
+                        <label className="resume-label">End date</label>
                         <input
                           type="date"
                           value={entry.end}
@@ -452,13 +624,13 @@ const ResumePage = () => {
                               event.target.value,
                             )
                           }
-                          style={inputStyle}
+                          className="resume-input"
                         />
                       </div>
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Description</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Description</label>
                       <textarea
                         value={entry.description}
                         onChange={(event) =>
@@ -469,24 +641,22 @@ const ResumePage = () => {
                           )
                         }
                         rows={3}
-                        style={{ ...inputStyle, resize: "vertical" }}
+                        className="resume-textarea"
                       />
                     </div>
 
-                    <div
-                      style={{ display: "flex", gap: "10px", marginTop: "8px" }}
-                    >
+                    <div className="resume-actions">
                       <button
                         type="button"
                         onClick={() => saveEducationEntry(entry.id)}
-                        style={primaryButtonStyle}
+                        className="resume-button-primary"
                       >
                         Save education
                       </button>
                       <button
                         type="button"
                         onClick={() => removeEducationEntry(entry.id)}
-                        style={dangerButtonStyle}
+                        className="resume-button-danger"
                       >
                         Remove
                       </button>
@@ -495,27 +665,21 @@ const ResumePage = () => {
                 ))}
 
                 {savedEducation.map((entry) => (
-                  <div key={entry.id} style={savedCardStyle}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: "8px",
-                      }}
-                    >
+                  <div key={entry.id} className="resume-saved-card">
+                    <div className="resume-card-header">
                       <strong>Education</strong>
-                      <button
-                        type="button"
-                        onClick={() => removeEducationEntry(entry.id)}
-                        style={miniRemoveButtonStyle}
-                      >
-                        ×
-                      </button>
+                      <div className="resume-actions">
+                        <button type="button" onClick={() => editEducationEntry(entry.id)} className="resume-mini-button">
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => removeEducationEntry(entry.id)} className="resume-mini-button">
+                          ×
+                        </button>
+                      </div>
                     </div>
-                    <div>School: {entry.school || "N/A"}</div>
+                    <div>School / university: {entry.title || "N/A"}</div>
                     <div>Degree: {entry.degree || "N/A"}</div>
-                    <div>Degree Type: {entry.degreeType || "N/A"}</div>
-                    <div>Focus: {entry.focus || "N/A"}</div>
+                    <div>Major: {entry.major || "N/A"}</div>
                     <div>GPA: {entry.gpa || "N/A"}</div>
                     <div>Start: {entry.start || "N/A"}</div>
                     <div>End: {entry.end || "N/A"}</div>
@@ -526,19 +690,12 @@ const ResumePage = () => {
             </section>
 
             <section>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "12px",
-                }}
-              >
-                <h2 style={{ margin: 0 }}>Experience</h2>
+              <div className="resume-section-header">
+                <h2 className="resume-section-heading">Experience</h2>
                 <button
                   type="button"
                   onClick={addExperienceEntry}
-                  style={secondaryButtonStyle}
+                  className="resume-button-secondary"
                 >
                   + Add experience
                 </button>
@@ -546,9 +703,9 @@ const ResumePage = () => {
 
               <div style={{ display: "grid", gap: "18px" }}>
                 {unsavedExperience.map((entry) => (
-                  <div key={entry.id} style={draftCardStyle}>
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Title</label>
+                  <div key={entry.id} className="resume-draft-card">
+                    <div className="resume-field-row">
+                      <label className="resume-label">Title</label>
                       <input
                         type="text"
                         value={entry.title}
@@ -559,12 +716,12 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Company</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Company</label>
                       <input
                         type="text"
                         value={entry.company}
@@ -575,40 +732,51 @@ const ResumePage = () => {
                             event.target.value,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-input"
                       />
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Type</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Type</label>
                       <select
                         value={entry.type}
                         onChange={(event) =>
                           updateExperienceEntry(
                             entry.id,
                             "type",
-                            event.target.value as ExperienceType,
+                            event.target.value as ExperienceTypeValue,
                           )
                         }
-                        style={inputStyle}
+                        className="resume-select"
                       >
-                        {Object.values(ExperienceType).map((experienceType) => (
-                          <option key={experienceType} value={experienceType}>
-                            {experienceType}
-                          </option>
-                        ))}
+                        <option value="job">Job</option>
+                        <option value="project">Project</option>
                       </select>
                     </div>
 
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: "14px",
-                      }}
-                    >
-                      <div style={fieldRowStyle}>
-                        <label style={labelStyle}>Start date</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">
+                        Currently employed here
+                      </label>
+                      <label className="resume-checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={entry.currentJob}
+                          onChange={(event) =>
+                            updateExperienceEntry(
+                              entry.id,
+                              "currentJob",
+                              event.target.checked,
+                            )
+                          }
+                        />
+                        <span>Current job</span>
+                      </label>
+                    </div>
+
+                    <div className="resume-two-col">
+                      <div className="resume-field-row">
+                        <label className="resume-label">Start date</label>
                         <input
                           type="date"
                           value={entry.start}
@@ -619,14 +787,15 @@ const ResumePage = () => {
                               event.target.value,
                             )
                           }
-                          style={inputStyle}
+                          className="resume-input"
                         />
                       </div>
-                      <div style={fieldRowStyle}>
-                        <label style={labelStyle}>End date</label>
+                      <div className="resume-field-row">
+                        <label className="resume-label">End date</label>
                         <input
                           type="date"
                           value={entry.end}
+                          disabled={entry.currentJob}
                           onChange={(event) =>
                             updateExperienceEntry(
                               entry.id,
@@ -634,13 +803,13 @@ const ResumePage = () => {
                               event.target.value,
                             )
                           }
-                          style={inputStyle}
+                          className={`resume-input ${entry.currentJob ? "resume-disabled-input" : ""}`}
                         />
                       </div>
                     </div>
 
-                    <div style={fieldRowStyle}>
-                      <label style={labelStyle}>Description</label>
+                    <div className="resume-field-row">
+                      <label className="resume-label">Description</label>
                       <textarea
                         value={entry.description}
                         onChange={(event) =>
@@ -651,24 +820,22 @@ const ResumePage = () => {
                           )
                         }
                         rows={4}
-                        style={{ ...inputStyle, resize: "vertical" }}
+                        className="resume-textarea"
                       />
                     </div>
 
-                    <div
-                      style={{ display: "flex", gap: "10px", marginTop: "8px" }}
-                    >
+                    <div className="resume-actions">
                       <button
                         type="button"
                         onClick={() => saveExperienceEntry(entry.id)}
-                        style={primaryButtonStyle}
+                        className="resume-button-primary"
                       >
                         Save experience
                       </button>
                       <button
                         type="button"
                         onClick={() => removeExperienceEntry(entry.id)}
-                        style={dangerButtonStyle}
+                        className="resume-button-danger"
                       >
                         Remove
                       </button>
@@ -677,26 +844,22 @@ const ResumePage = () => {
                 ))}
 
                 {savedExperience.map((entry) => (
-                  <div key={entry.id} style={savedCardStyle}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: "8px",
-                      }}
-                    >
+                  <div key={entry.id} className="resume-saved-card">
+                    <div className="resume-card-header">
                       <strong>Experience</strong>
-                      <button
-                        type="button"
-                        onClick={() => removeExperienceEntry(entry.id)}
-                        style={miniRemoveButtonStyle}
-                      >
-                        ×
-                      </button>
+                      <div className="resume-actions">
+                        <button type="button" onClick={() => editExperienceEntry(entry.id)} className="resume-mini-button">
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => removeExperienceEntry(entry.id)} className="resume-mini-button">
+                          ×
+                        </button>
+                      </div>
                     </div>
                     <div>Title: {entry.title || "N/A"}</div>
                     <div>Company: {entry.company || "N/A"}</div>
                     <div>Type: {entry.type || "N/A"}</div>
+                    <div>Current job: {entry.currentJob ? "Yes" : "No"}</div>
                     <div>Start: {entry.start || "N/A"}</div>
                     <div>End: {entry.end || "N/A"}</div>
                     <div>Description: {entry.description || "N/A"}</div>
@@ -705,93 +868,22 @@ const ResumePage = () => {
               </div>
             </section>
 
-            <button type="submit" style={primaryButtonStyle}>
-              Save resume
+            {submitError ? (
+              <div className="resume-status-error">{submitError}</div>
+            ) : null}
+            {submitSuccess ? (
+              <div className="resume-status-success">{submitSuccess}</div>
+            ) : null}
+
+            <button type="submit" className="resume-button-primary" disabled={isLoading}>
+              {resumeId ? "Update resume" : "Save resume"}
             </button>
           </form>
+          ) : null}
         </div>
       </div>
     </>
   );
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "12px 14px",
-  fontSize: "1rem",
-  border: "1px solid #cbd5e1",
-  borderRadius: "10px",
-  boxSizing: "border-box",
-  background: "#ffffff",
-  color: "#111827",
-};
-
-const draftCardStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "14px",
-  border: "1px solid #e2e8f0",
-  borderRadius: "12px",
-  padding: "18px",
-  background: "#f8fafc",
-};
-
-const savedCardStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "6px",
-  border: "1px solid #dbeafe",
-  borderRadius: "10px",
-  padding: "12px 14px",
-  background: "#eff6ff",
-  color: "#1e293b",
-};
-
-const fieldRowStyle: React.CSSProperties = {
-  display: "grid",
-  gap: "8px",
-};
-
-const labelStyle: React.CSSProperties = {
-  fontWeight: 600,
-  color: "#1e293b",
-};
-
-const primaryButtonStyle: React.CSSProperties = {
-  padding: "12px 20px",
-  border: "none",
-  borderRadius: "10px",
-  background: "#2563eb",
-  color: "#fff",
-  fontSize: "1rem",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const secondaryButtonStyle: React.CSSProperties = {
-  padding: "10px 14px",
-  border: "1px solid #cbd5e1",
-  borderRadius: "10px",
-  background: "#f8fafc",
-  cursor: "pointer",
-  color: "#111827",
-  fontWeight: 600,
-};
-
-const dangerButtonStyle: React.CSSProperties = {
-  padding: "10px 14px",
-  border: "1px solid #fecaca",
-  borderRadius: "10px",
-  background: "#fff1f2",
-  color: "#b91c1c",
-  cursor: "pointer",
-};
-
-const miniRemoveButtonStyle: React.CSSProperties = {
-  border: "none",
-  background: "transparent",
-  color: "#374151",
-  cursor: "pointer",
-  fontSize: "18px",
-  lineHeight: 1,
 };
 
 export default ResumePage;

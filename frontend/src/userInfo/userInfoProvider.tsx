@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { UserInfoContext, UserInfoActionsContext } from "./userInfoContext.js"
 import { type UserInfo } from "./userInfo.js";
+import { ApplicantUser, CompanyUser } from "shared";
 
 interface Props {
     children: React.ReactNode;
@@ -8,19 +9,22 @@ interface Props {
 
 const UserInfoProvider: React.FC<Props> = ({ children }) => {
     const [userInfo, setUserInfo] = useState<UserInfo>({
-        currentUserType: null,
-        username: null,
+        user: null,
+        // currentUserType: null,
+        // username: null,
         auth: null,
     });
 
     const updateUserInfo = useCallback(
-        (currentUserType: string,
-        username: string,
+        (user: ApplicantUser | CompanyUser | null,
+        // (currentUserType: string,
+        // username: string,
         auth: string) => {
             setUserInfo(() => {
                 return {
-                  currentUserType: currentUserType,
-                  username: username,
+                    user: user,
+                //   currentUserType: currentUserType,
+                //   username: username,
                   auth: auth,
                 };
             })
@@ -31,8 +35,9 @@ const UserInfoProvider: React.FC<Props> = ({ children }) => {
       () => {
         setUserInfo(() => {
           return {
-            currentUserType: null,
-            username: null,
+            user: null,
+            // currentUserType: null,
+            // username: null,
             auth: null,
           };
         });

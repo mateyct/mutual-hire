@@ -13,7 +13,6 @@ const Interested = () => {
         style={{
           minHeight: "100vh",
           padding: "24px 16px",
-          background: "#f8fafc",
         }}
       >
         <div

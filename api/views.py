@@ -125,6 +125,8 @@ class ResumeView(APIView):
 
 
 class MatchingResumes(APIView):
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
         job_id = request.query_params.get("job_id")
         if not job_id:
@@ -134,48 +136,60 @@ class MatchingResumes(APIView):
 
 
 class MatchingJobs(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        resume_id = request.query_params.get("resume_id")
-        if not resume_id:
-            raise serializers.ValidationError(
-                {"resume_id": "This query parameter is required."}
+        try:
+            resume = request.user.resumes 
+        except Resume.DoesNotExist:
+            return Response(
+                {"error": "You do not have a resume set up yet."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
-        resume = get_object_or_404(Resume, pk=resume_id)
-        return Response(
-            JobSerializer(find_matching_jobs_for_resume(resume), many=True).data
-        )
+
+        ranked_jobs = find_matching_jobs_for_resume(resume)
+
+        serializer = JobSerializer(ranked_jobs, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SwipeView(APIView):
     permission_classes = [IsAuthenticated] 
 
     def post(self, request):
         job_id = request.data.get('job_id')
-        resume_id = request.data.get('resume_id')
-        is_interested = request.data.get('is_interested')  # Expected: True or False
+        is_interested = request.data.get('is_interested') 
 
-        if job_id is None or resume_id is None or is_interested is None:
+        if job_id is None or is_interested is None:
             return Response(
-                {"error": "job_id, resume_id, and is_interested are required."}, 
+                {"error": "job_id and is_interested are required."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        user_profile = request.user.profile
+
+        # Automatically get resume_id if an applicant is swiping
+        if user_profile.user_type == UserType.APPLICANT:
+            try:
+                resume_id = request.user.resumes.id
+            except Resume.DoesNotExist:
+                return Response({"error": "You do not have a resume set up yet."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Recruiters pass resume_id from the card
+            resume_id = request.data.get('resume_id')
+            if resume_id is None:
+                return Response({"error": "resume_id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         match_record, created = Match.objects.get_or_create(
             job_id=job_id, 
             resume_id=resume_id
         )
 
-        user_profile = request.user.profile
-
         if user_profile.user_type == UserType.APPLICANT:
-            if match_record.resume.owner != request.user:
-                return Response({"error": "You don't own this resume."}, status=status.HTTP_403_FORBIDDEN)
-            
             match_record.applicant_swiped_yes = is_interested
-
         elif user_profile.user_type == UserType.RECRUITER:
             if match_record.job.company != request.user:
                 return Response({"error": "You don't own this job."}, status=status.HTTP_403_FORBIDDEN)
-            
             match_record.employer_swiped_yes = is_interested
 
         match_record.save()

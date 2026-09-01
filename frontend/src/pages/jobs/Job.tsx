@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Job, JobType } from "shared";
 import SideMenu from "../Menu.js";
+import { useUserInfo } from "../../userInfo/userInfoHooks.js";
 
 const JobPage = () => {
   const [jobTitle, setJobTitle] = useState("");
@@ -10,6 +11,13 @@ const JobPage = () => {
   const [description, setDescription] = useState("");
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
+  const { auth } = useUserInfo()
+
+  const jobTypeLabels: Record<JobType, string> = {
+    [JobType.fullTime]: "Full-time",
+    [JobType.partTime]: "Part-time",
+    [JobType.intern]: "Internship",
+  };
 
   const addSkill = () => {
     const trimmed = skillInput.trim();
@@ -29,7 +37,7 @@ const JobPage = () => {
     );
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const job = new Job(
@@ -42,7 +50,30 @@ const JobPage = () => {
       skills,
     );
 
-    console.log("Job data:", job);
+    const response = await fetch("http://localhost:8000/api/job/", {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${auth}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: job.jobTitle,
+        location: job.location,
+        pay: job.payPerYear,
+        type: job.type,
+        description: job.description,
+        skills: job.skillsNeeded,
+      }),
+    });
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log("Job data:", job);
+      console.log(data);
+    } else {
+      console.log("error")
+      console.log(data);
+    }
   };
 
   return (
@@ -138,7 +169,7 @@ const JobPage = () => {
               >
                 {Object.values(JobType).map((jobType) => (
                   <option key={jobType} value={jobType}>
-                    {jobType}
+                    {jobTypeLabels[jobType]}
                   </option>
                 ))}
               </select>

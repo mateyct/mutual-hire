@@ -11,16 +11,17 @@ import JobPage from "./pages/jobs/Job.tsx";
 import Interested from "./pages/interested/Interested.tsx";
 import Match from "./pages/match/Match.tsx";
 import { useUserInfo } from "./userInfo/userInfoHooks.ts";
+import { ApplicantUser, CompanyUser } from "shared";
 
 function App() {
-  const { currentUserType, username, auth } = useUserInfo();
+  const { user, auth } = useUserInfo();
 
   const isAuth = () => {
-    return !!currentUserType && !!username && !!auth;
+    return !!user && !!auth;
   };
 
   if (isAuth()) {
-    if (currentUserType === "company") {
+    if (user instanceof CompanyUser) {
       return (
         <Routes>
           <Route
@@ -29,6 +30,7 @@ function App() {
           />
           <Route path="/company/jobs" element={<Jobs />} />
           <Route path="/company/job" element={<JobPage />} />
+          <Route path="/company/match" element={<Match />} />
         </Routes>
       );
     }
@@ -43,22 +45,7 @@ function App() {
         <Route path="/applicant/interested" element={<Interested />} />
         <Route
           path="/applicant/match"
-          element={
-            <Match
-              proposedMatch={{
-                type: "job",
-                job: {
-                  title: "Sample Role",
-                  location: "Remote",
-                  payPerYear: 120000,
-                  type: "fullTime",
-                  description: "Sample match placeholder",
-                  skillsNeeded: ["React", "TypeScript"],
-                },
-                company: { name: "Example Company" },
-              }}
-            />
-          }
+          element={<Match/>}
         />
       </Routes>
     );

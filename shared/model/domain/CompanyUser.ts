@@ -15,6 +15,10 @@ export class CompanyUser {
         this._description = description
     }
 
+    public get password() {
+        return this._password;
+    }
+
     public get email() {
         return this._email;
     }

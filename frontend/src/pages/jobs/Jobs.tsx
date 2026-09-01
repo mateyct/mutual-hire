@@ -1,10 +1,64 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import SideMenu from "../Menu.js";
+import { Job } from "shared";
+import { useUserInfo } from "../../userInfo/userInfoHooks.js";
+
+type JobListing = Job & { id: number };
 
 const Jobs = () => {
   const navigate = useNavigate();
+  const { user, auth } = useUserInfo();
+  const [jobListings, setJobListings] = useState<JobListing[]>([]);
 
-  const jobListings: string[] = [];
+  useEffect(() => {
+    const fetchJobListings = async () => {
+      const response = await fetch("http://localhost:8000/api/job/", {
+        method: "GET",
+        headers: {
+          Authorization: `Token ${auth}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json()
+      if (response.ok) {
+        const companyUserID =
+          (user as { _userID?: number | null } | null)?._userID ?? null;
+        const jobs: JobListing[] = data.map(
+          (job: {
+            id: number;
+            title: string;
+            jobTitle?: string;
+            location: string;
+            pay: number;
+            payPerYear?: number;
+            type: Job["type"];
+            description: string;
+            skills: string[];
+            skillsNeeded?: string[];
+          }) =>
+            Object.assign(
+              new Job(
+                job.title ?? job.jobTitle,
+                companyUserID,
+                job.location,
+                job.pay ?? job.payPerYear,
+                job.type,
+                job.description,
+                job.skills ?? job.skillsNeeded,
+              ),
+              { id: job.id },
+            ),
+        );
+        setJobListings(jobs);
+      } else {
+        console.log(data);
+        setJobListings([]);
+      }
+    }
+
+    fetchJobListings();
+  }, [user]);
 
   return (
     <>
@@ -83,7 +137,7 @@ const Jobs = () => {
           <div style={{ display: "grid", gap: "12px" }}>
             {jobListings.map((job, index) => (
               <div
-                key={`${job}-${index}`}
+                key={`${job.jobTitle}-${index}`}
                 style={{
                   border: "1px solid #e2e8f0",
                   borderRadius: "12px",
@@ -91,7 +145,27 @@ const Jobs = () => {
                   background: "#f8fafc",
                 }}
               >
-                {job}
+                <h2 style={{ margin: "0 0 8px", fontSize: "1.25rem", color: "#0f172a" }}>
+                  {job.jobTitle}
+                </h2>
+                <p style={{ margin: "0 0 6px", color: "#475569" }}>
+                  {job.location} · {job.type}
+                </p>
+                <p style={{ margin: 0, color: "#475569" }}>
+                  ${job.payPerYear.toLocaleString()} / year
+                </p>
+                <Link
+                  to={`/company/match?job_id=${job.id}`}
+                  style={{
+                    display: "inline-block",
+                    marginTop: "12px",
+                    color: "#2563eb",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  View matches
+                </Link>
               </div>
             ))}
           </div>
