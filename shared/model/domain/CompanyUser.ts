@@ -3,14 +3,24 @@ import { Job, JobType } from "./Job"
 export class CompanyUser {
     private _companyName: string;
     private _password: string;
+    private _email: string;
     private _description: string;
     private _jobs: Job[] = [];
     private _userID: number | null = null;
 
-    public constructor(companyName: string, password: string, description: string) {
+    public constructor(companyName: string, password: string, email: string, description: string) {
         this._companyName = companyName;
         this._password = password;
+        this._email = email;
         this._description = description
+    }
+
+    public get email() {
+        return this._email;
+    }
+
+    public set email(email: string) {
+        this._email = email;
     }
 
     public get companyName() {
