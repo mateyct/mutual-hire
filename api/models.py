@@ -23,6 +23,18 @@ class Job(models.Model):
     type = models.CharField(max_length=16, choices=EmploymentType.choices)
     description = models.TextField()
 
+    description_embedding = VectorField(dimensions=1536, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        text_to_embed = f"{self.title} {self.type} position. Details: {self.description}"
+
+        if self.description:  
+            self.description_embedding = generate_embedding(text_to_embed)
+        else:
+            self.description_embedding = None
+            
+        super().save(*args, **kwargs)
+
 
 class Resume(models.Model):
     summary = models.TextField()
@@ -36,6 +48,7 @@ class Resume(models.Model):
     skills_embedding = VectorField(dimensions=1536, null=True, blank=True)
     experience_embedding = VectorField(dimensions=1536, null=True, blank=True)
     education_embedding = VectorField(dimensions=1536, null=True, blank=True)
+    summary_embedding = VectorField(dimensions=1536, null=True, blank=True)
 
     def update_section_embedding(self, section_name: str):
         combined_text = ""
@@ -77,6 +90,15 @@ class Resume(models.Model):
             setattr(self, field_to_update, vector)
             self.save(update_fields=[field_to_update])
 
+    def save(self, *args, **kwargs):
+        if self.summary:
+            combined_text = f"Professional Summary: {self.summary}"
+            self.summary_embedding = generate_embedding(combined_text)
+        else:
+            self.summary_embedding = None
+            
+        super().save(*args, **kwargs)
+
 
 class UserType(models.TextChoices):
     RECRUITER = "recruiter", "Recruiter"
@@ -98,7 +120,7 @@ class UserProfile(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    models.Q(user_type=UserType.RECRUITER)
+                    ~models.Q(user_type=UserType.RECRUITER)
                     | ~models.Q(company_name="")
                 ),
                 name="recruiter_requires_company_name",

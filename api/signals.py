@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from .models import Education, Experience, Skill
+from .models import Education, Experience, Skill, Job, Resume
 
 @receiver([post_save, post_delete], sender=Education)
 def update_education_vector(sender, instance, **kwargs):
@@ -12,4 +12,7 @@ def update_experience_vector(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=Skill)
 def update_skills_vector(sender, instance, **kwargs):
-    instance.resume.update_section_embedding("skills")
+    resume = getattr(instance, 'resume', None)
+    
+    if resume:
+        resume.update_section_embedding("skills")
