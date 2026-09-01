@@ -6,7 +6,7 @@ const CompanyRegister = () => {
     const { updateUserInfo } = useUserInfoActions();
     const nav = useNavigate();
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
       const formData = new FormData(event.currentTarget);
@@ -19,10 +19,31 @@ const CompanyRegister = () => {
 
       console.log(company);
 
-      // MAKE BACKEND CALL HERE AND FIX AUTH TOKEN!!!!
-
-      updateUserInfo(company, "fakeTOKEN");
-      nav("/company/account");
+      const response = await fetch(
+        "http://localhost:8000/api/auth/register/recruiter/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: company.companyName,
+            email: company.email,
+            first_name: company.companyName,
+            last_name: company.companyName,
+            password: company.password,
+            description: null,
+          }),
+        },
+      );
+      const data = await response.json();
+      if (response.ok) {
+        console.log(data);
+        company.userID = data["profile"]["id"];
+        updateUserInfo(company, data["token"]);
+        nav("/company/account");
+      } else {
+        console.log("SAD :(");
+        console.log(data);
+      }
     };;
 
     return (
