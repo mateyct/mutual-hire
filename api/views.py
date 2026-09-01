@@ -4,11 +4,11 @@
 # from rest_framework.authtoken.views import ObtainAuthToken
 # from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView
-from .models import UserProfile, UserType, Job, Resume
+from .models import UserProfile, UserType, Job, Resume, Match
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -81,3 +81,48 @@ class MatchingJobs(APIView):
         serializer = JobSerializer(ranked_jobs, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class SwipeView(APIView):
+    permission_classes = [IsAuthenticated] 
+
+    def post(self, request):
+        job_id = request.data.get('job_id')
+        resume_id = request.data.get('resume_id')
+        is_interested = request.data.get('is_interested')  # Expected: True or False
+
+        if job_id is None or resume_id is None or is_interested is None:
+            return Response(
+                {"error": "job_id, resume_id, and is_interested are required."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        match_record, created = Match.objects.get_or_create(
+            job_id=job_id, 
+            resume_id=resume_id
+        )
+
+        user_profile = request.user.profile
+
+        if user_profile.user_type == UserType.APPLICANT:
+            if match_record.resume.owner != request.user:
+                return Response({"error": "You don't own this resume."}, status=status.HTTP_403_FORBIDDEN)
+            
+            match_record.applicant_swiped_yes = is_interested
+
+        elif user_profile.user_type == UserType.RECRUITER:
+            if match_record.job.company != request.user:
+                return Response({"error": "You don't own this job."}, status=status.HTTP_403_FORBIDDEN)
+            
+            match_record.employer_swiped_yes = is_interested
+
+        match_record.save()
+
+        is_mutual_match = (
+            match_record.applicant_swiped_yes is True and 
+            match_record.employer_swiped_yes is True
+        )
+
+        return Response({
+            "message": "Swipe recorded successfully.",
+            "is_mutual_match": is_mutual_match
+        }, status=status.HTTP_200_OK)
