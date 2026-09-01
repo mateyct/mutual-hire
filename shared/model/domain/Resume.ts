@@ -13,12 +13,28 @@ export class Resume {
     this._personalSummary = personalSummary;
   }
 
-  public get personalSummary() {
+  public get userID(): number | null {
+    return this._userID;
+  }
+
+  public get personalSummary(): string {
     return this._personalSummary;
   }
 
   public set personalSummary(summary: string) {
     this._personalSummary = summary;
+  }
+
+  public get education(): Education[] {
+    return this._education;
+  }
+
+  public get experiences(): Experience[] {
+    return this._experiences;
+  }
+
+  public get skills(): string[] {
+    return this._skills;
   }
 
   public addEducation(education: Education) {
