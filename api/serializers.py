@@ -117,13 +117,7 @@ class ResumeSerializer(serializers.ModelSerializer):
         model = Resume
         fields = [
             'id', 'owner', 'summary', 
-            'skills', 'experiences', 'education',
-            'skills_embedding', 'experience_embedding', 
-            'education_embedding', 'summary_embedding'
-        ]
-        read_only_fields = [
-            'skills_embedding', 'experience_embedding', 
-            'education_embedding', 'summary_embedding'
+            'skills', 'experiences', 'education'
         ]
 
 
@@ -135,7 +129,5 @@ class JobSerializer(serializers.ModelSerializer):
         model = Job
         fields = [
             'id', 'title', 'company', 'location', 
-            'pay', 'type', 'description', 'skills',
-            'description_embedding'
+            'pay', 'type', 'description', 'skills'
         ]
-        read_only_fields = ['description_embedding']

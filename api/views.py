@@ -8,14 +8,14 @@ from rest_framework.permissions import AllowAny
 
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView
-from .models import UserProfile, UserType, Job
+from .models import UserProfile, UserType, Job, Resume
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
-from .matching import find_matching_resumes_for_job
 from .serializers import ResumeSerializer, RegisterSerializer, JobSerializer
+from .matching import find_matching_resumes_for_job, find_matching_jobs_for_resume
 
 # Create your views here.
 class RegisterView(CreateAPIView):
@@ -67,5 +67,17 @@ class MatchingResumes(APIView):
         ranked_resumes = find_matching_resumes_for_job(job)
 
         serializer = ResumeSerializer(ranked_resumes, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class MatchingJobs(APIView):
+    def get(self, request):
+        resume_id = request.query_params.get('resume_id')
+
+        resume = Resume.objects.get(pk=resume_id)
+
+        ranked_jobs = find_matching_jobs_for_resume(resume)
+
+        serializer = JobSerializer(ranked_jobs, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
