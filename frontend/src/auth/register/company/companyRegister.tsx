@@ -21,7 +21,7 @@ const CompanyRegister = () => {
 
       // MAKE BACKEND CALL HERE AND FIX AUTH TOKEN!!!!
 
-      updateUserInfo("company", company.companyName, "fakeTOKEN");
+      updateUserInfo(company, "fakeTOKEN");
       nav("/company/account");
     };;
 

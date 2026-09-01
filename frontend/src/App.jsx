@@ -11,16 +11,17 @@ import JobPage from "./pages/jobs/Job.tsx";
 import Interested from "./pages/interested/Interested.tsx";
 import Match from "./pages/match/Match.tsx";
 import { useUserInfo } from "./userInfo/userInfoHooks.ts";
+import { ApplicantUser, CompanyUser } from "shared";
 
 function App() {
-  const { currentUserType, username, auth } = useUserInfo();
+  const { user, auth } = useUserInfo();
 
   const isAuth = () => {
-    return !!currentUserType && !!username && !!auth;
+    return !!user && !!auth;
   };
 
   if (isAuth()) {
-    if (currentUserType === "company") {
+    if (typeof user === CompanyUser) {
       return (
         <Routes>
           <Route
