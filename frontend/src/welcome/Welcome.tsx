@@ -33,34 +33,43 @@ const Welcome = () => {
       <main
         style={{
           flex: 1,
-          display: "flex",
+          display: "grid",
+          placeContent: "center",
+          justifyItems: "center",
           justifyContent: "center",
           alignItems: "center",
-          gap: "32px",
+          gap: "12px",
+          textAlign: "center",
         }}
       >
-        <button
-          type="button"
-          style={{
-            padding: "32px 56px",
-            fontSize: "24px",
-            cursor: "pointer",
-          }}
-          onClick={() => navigate("/register/applicant")}
-        >
-          Applicants
-        </button>
-        <button
-          type="button"
-          style={{
-            padding: "32px 56px",
-            fontSize: "24px",
-            cursor: "pointer",
-          }}
-          onClick={() => navigate("/register/company")}
-        >
-          Companies
-        </button>
+        <p>
+          Welcome to MutualHire, where we match applicants to job opportunities.
+          If you are new here, please register.
+        </p>
+        <div style={{ display: "flex", gap: "24px" }}>
+          <button
+            type="button"
+            style={{
+              padding: "32px 56px",
+              fontSize: "24px",
+              cursor: "pointer",
+            }}
+            onClick={() => navigate("/register/applicant")}
+          >
+            Applicants
+          </button>
+          <button
+            type="button"
+            style={{
+              padding: "32px 56px",
+              fontSize: "24px",
+              cursor: "pointer",
+            }}
+            onClick={() => navigate("/register/company")}
+          >
+            Companies
+          </button>
+        </div>
       </main>
     </div>
   );
