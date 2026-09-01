@@ -8,8 +8,6 @@ import CompanyRegister from "./auth/register/company/companyRegister.tsx"
 
 function App() {
 
-
-
   return (
     <Routes>
       <Route path="/" element={<Welcome />} />
