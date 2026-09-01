@@ -7,7 +7,6 @@ import CompanyRegister from "./auth/register/company/companyRegister.tsx"
 import Account from "./pages/account/Account.tsx"
 import { useUserInfo } from "./userInfo/userInfoHooks.ts"
 
-
 function App() {
   const { currentUserType,
         username,

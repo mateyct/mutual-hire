@@ -1,15 +1,23 @@
 import { useState } from "react";
 
-const Account = () => {
+type UserType = "ApplicantUser" | "CompanyUser";
+
+const Account = ({ userType }: { userType: UserType }) => {
+  const isApplicant = userType === "ApplicantUser";
+
   const [formData, setFormData] = useState({
     username: "",
+    companyName: "",
     email: "",
     password: "",
     confirmPassword: "",
+    description: "",
   });
   const [saved, setSaved] = useState(false);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = event.target;
     setFormData((previous) => ({ ...previous, [name]: value }));
     setSaved(false);
@@ -23,9 +31,12 @@ const Account = () => {
     }
 
     console.log("Account updated", {
-      username: formData.username,
+      ...(isApplicant
+        ? { username: formData.username }
+        : { companyName: formData.companyName }),
       email: formData.email,
       password: formData.password,
+      ...(isApplicant ? {} : { description: formData.description }),
     });
 
     setSaved(true);
@@ -41,45 +52,75 @@ const Account = () => {
       style={{
         minHeight: "100vh",
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
-        padding: "24px",
+        padding: "10px",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "520px",
+          maxWidth: "560px",
           background: "#ffffff",
-          borderRadius: "16px",
+          borderRadius: "10px",
           boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
-          padding: "32px",
+          padding: "20px",
         }}
       >
         <h1 style={{ margin: "0 0 8px", fontSize: "2rem" }}>Account</h1>
         <p style={{ margin: "0 0 24px", color: "#475569" }}>
-          Update your login information below.
+          {isApplicant
+            ? "Update your applicant profile information below."
+            : "Update your company profile information below."}
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: "18px" }}>
-          <div>
-            <label
-              htmlFor="username"
-              style={{ display: "block", marginBottom: "8px", fontWeight: 600 }}
-            >
-              Username
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="Enter a username"
-              required
-              style={inputStyle}
-            />
-          </div>
+          {isApplicant ? (
+            <div>
+              <label
+                htmlFor="username"
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: 600,
+                }}
+              >
+                Username
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Enter a username"
+                required
+                style={inputStyle}
+              />
+            </div>
+          ) : (
+            <div>
+              <label
+                htmlFor="companyName"
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: 600,
+                }}
+              >
+                Company Name
+              </label>
+              <input
+                id="companyName"
+                name="companyName"
+                type="text"
+                value={formData.companyName}
+                onChange={handleChange}
+                placeholder="Enter your company name"
+                required
+                style={inputStyle}
+              />
+            </div>
+          )}
 
           <div>
             <label
@@ -138,6 +179,31 @@ const Account = () => {
             />
           </div>
 
+          {!isApplicant && (
+            <div>
+              <label
+                htmlFor="description"
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: 600,
+                }}
+              >
+                Description
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Tell applicants about your company"
+                required
+                rows={5}
+                style={{ ...inputStyle, resize: "vertical" }}
+              />
+            </div>
+          )}
+
           {passwordMismatch && (
             <p style={{ margin: 0, color: "#dc2626", fontSize: "0.95rem" }}>
               Passwords do not match.
@@ -176,6 +242,7 @@ const inputStyle: React.CSSProperties = {
   padding: "12px 14px",
   fontSize: "1rem",
   border: "1px solid #cbd5e1",
+  background: "#48474a",
   borderRadius: "10px",
   boxSizing: "border-box",
 };
