@@ -2,15 +2,21 @@ import { Education } from "./Education.js";
 import { Experience } from "./Experience.js";
 
 export class Resume {
+  private _id: number | null;
   private _userID: number | null;
   private _personalSummary: string;
   private _education: Education[] = [];
   private _experiences: Experience[] = [];
   private _skills: string[] = [];
 
-  public constructor(userID: number | null, personalSummary: string) {
+  public constructor(id: number | null, userID: number | null, personalSummary: string) {
+    this._id = id;
     this._userID = userID;
     this._personalSummary = personalSummary;
+  }
+
+  public get id(): number | null {
+    return this._id;
   }
 
   public get userID(): number | null {

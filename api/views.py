@@ -158,32 +158,38 @@ class SwipeView(APIView):
 
     def post(self, request):
         job_id = request.data.get('job_id')
-        resume_id = request.data.get('resume_id')
-        is_interested = request.data.get('is_interested')  # Expected: True or False
+        is_interested = request.data.get('is_interested') 
 
-        if job_id is None or resume_id is None or is_interested is None:
+        if job_id is None or is_interested is None:
             return Response(
-                {"error": "job_id, resume_id, and is_interested are required."}, 
+                {"error": "job_id and is_interested are required."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        user_profile = request.user.profile
+
+        # Automatically get resume_id if an applicant is swiping
+        if user_profile.user_type == UserType.APPLICANT:
+            try:
+                resume_id = request.user.resumes.id
+            except Resume.DoesNotExist:
+                return Response({"error": "You do not have a resume set up yet."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Recruiters pass resume_id from the card
+            resume_id = request.data.get('resume_id')
+            if resume_id is None:
+                return Response({"error": "resume_id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         match_record, created = Match.objects.get_or_create(
             job_id=job_id, 
             resume_id=resume_id
         )
 
-        user_profile = request.user.profile
-
         if user_profile.user_type == UserType.APPLICANT:
-            if match_record.resume.owner != request.user:
-                return Response({"error": "You don't own this resume."}, status=status.HTTP_403_FORBIDDEN)
-            
             match_record.applicant_swiped_yes = is_interested
-
         elif user_profile.user_type == UserType.RECRUITER:
             if match_record.job.company != request.user:
                 return Response({"error": "You don't own this job."}, status=status.HTTP_403_FORBIDDEN)
-            
             match_record.employer_swiped_yes = is_interested
 
         match_record.save()
