@@ -111,21 +111,9 @@ class UserProfile(models.Model):
         related_name="profile",
     )
     user_type = models.CharField(max_length=16, choices=UserType.choices, default=UserType.RECRUITER)
-    company_name = models.CharField(max_length=255, blank=True)
     description = models.TextField(
         null=True
     )
-
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                condition=(
-                    ~models.Q(user_type=UserType.RECRUITER)
-                    | ~models.Q(company_name="")
-                ),
-                name="recruiter_requires_company_name",
-            ),
-        ]
 
 
 class Education(models.Model):
