@@ -10,6 +10,7 @@ import Jobs from "./pages/jobs/Jobs.tsx";
 import JobPage from "./pages/jobs/Job.tsx";
 import Interested from "./pages/interested/Interested.tsx";
 import Match from "./pages/match/Match.tsx";
+import CompanyMatches from "./pages/matches/CompanyMatches.tsx"
 import { useUserInfo } from "./userInfo/userInfoHooks.ts";
 import { ApplicantUser, CompanyUser } from "shared";
 
@@ -31,6 +32,7 @@ function App() {
           <Route path="/company/jobs" element={<Jobs />} />
           <Route path="/company/job" element={<JobPage />} />
           <Route path="/company/match" element={<Match />} />
+          <Route path="/company/matches" element={<CompanyMatches />} />
         </Routes>
       );
     }

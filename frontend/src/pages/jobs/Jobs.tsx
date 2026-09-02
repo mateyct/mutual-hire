@@ -79,99 +79,117 @@ const Jobs = () => {
             padding: "28px",
           }}
         >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "16px",
-            marginBottom: "20px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <h1 style={{ margin: 0, fontSize: "2rem", color: "#0f172a" }}>
-              Your job listings
-            </h1>
-            <p style={{ margin: "8px 0 0", color: "#475569" }}>
-              Manage the jobs you have posted.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate("/company/job")}
-            style={{
-              border: "none",
-              borderRadius: "10px",
-              background: "#2563eb",
-              color: "#ffffff",
-              padding: "12px 18px",
-              fontWeight: 600,
-              fontSize: "1rem",
-              cursor: "pointer",
-            }}
-          >
-            + Add job
-          </button>
-        </div>
-
-        {jobListings.length === 0 ? (
           <div
             style={{
-              border: "1px dashed #cbd5e1",
-              borderRadius: "14px",
-              padding: "32px 20px",
-              textAlign: "center",
-              background: "#f8fafc",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "16px",
+              marginBottom: "20px",
+              flexWrap: "wrap",
             }}
           >
-            <p style={{ margin: 0, fontSize: "1.1rem", color: "#475569" }}>
-              You have not created any job listings yet.
-            </p>
-            <p style={{ margin: "8px 0 0", color: "#64748b" }}>
-              Click “Add job” to create your first listing.
-            </p>
+            <div>
+              <h1 style={{ margin: 0, fontSize: "2rem", color: "#0f172a" }}>
+                Your job listings
+              </h1>
+              <p style={{ margin: "8px 0 0", color: "#475569" }}>
+                Manage the jobs you have posted.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate("/company/job")}
+              style={{
+                border: "none",
+                borderRadius: "10px",
+                background: "#2563eb",
+                color: "#ffffff",
+                padding: "12px 18px",
+                fontWeight: 600,
+                fontSize: "1rem",
+                cursor: "pointer",
+              }}
+            >
+              + Add job
+            </button>
           </div>
-        ) : (
-          <div style={{ display: "grid", gap: "12px" }}>
-            {jobListings.map((job, index) => (
-              <div
-                key={`${job.jobTitle}-${index}`}
-                style={{
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  background: "#f8fafc",
-                }}
-              >
-                <h2 style={{ margin: "0 0 8px", fontSize: "1.25rem", color: "#0f172a" }}>
-                  {job.jobTitle}
-                </h2>
-                <p style={{ margin: "0 0 6px", color: "#475569" }}>
-                  {job.location} · {job.type}
-                </p>
-                <p style={{ margin: 0, color: "#475569" }}>
-                  ${job.payPerYear.toLocaleString()} / year
-                </p>
-                <Link
-                  to={`/company/match?job_id=${job.id}`}
+
+          {jobListings.length === 0 ? (
+            <div
+              style={{
+                border: "1px dashed #cbd5e1",
+                borderRadius: "14px",
+                padding: "32px 20px",
+                textAlign: "center",
+                background: "#f8fafc",
+              }}
+            >
+              <p style={{ margin: 0, fontSize: "1.1rem", color: "#475569" }}>
+                You have not created any job listings yet.
+              </p>
+              <p style={{ margin: "8px 0 0", color: "#64748b" }}>
+                Click “Add job” to create your first listing.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: "12px" }}>
+              {jobListings.map((job, index) => (
+                <div
+                  key={`${job.jobTitle}-${index}`}
                   style={{
-                    display: "inline-block",
-                    marginTop: "12px",
-                    color: "#2563eb",
-                    fontWeight: 600,
-                    textDecoration: "none",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    background: "#f8fafc",
                   }}
                 >
-                  View matches
-                </Link>
-              </div>
-            ))}
-          </div>
-        )}
+                  <h2
+                    style={{
+                      margin: "0 0 8px",
+                      fontSize: "1.25rem",
+                      color: "#0f172a",
+                    }}
+                  >
+                    {job.jobTitle}
+                  </h2>
+                  <p style={{ margin: "0 0 6px", color: "#475569" }}>
+                    {job.location} · {job.type}
+                  </p>
+                  <p style={{ margin: 0, color: "#475569" }}>
+                    ${job.payPerYear.toLocaleString()} / year
+                  </p>
+                  <Link
+                    to={`/company/match?job_id=${job.id}`}
+                    style={{
+                      display: "inline-block",
+                      marginTop: "12px",
+                      color: "#2563eb",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Pick matches
+                  </Link>
+                  <Link
+                    to={`/company/matches?job_id=${job.id}`}
+                    style={{
+                      display: "inline-block",
+                      marginTop: "12px",
+                      color: "#2563eb",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                    }}
+                  >
+                    View mutual matches
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 };
