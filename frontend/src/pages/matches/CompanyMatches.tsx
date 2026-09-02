@@ -71,7 +71,7 @@ const CompanyMatches = () => {
             console.log(data);
             setMatches([]);
         } else {
-            // need to make an endpoint that lets someone get an applicant based off of resume id, cause we need the email
+            // user info is in resume object, read Emily
             // get is there for jobID, so that's easy
             // also, where do those fetch requests even go? in serperate file in seperate functions?
             console.log("FIX LATER");
